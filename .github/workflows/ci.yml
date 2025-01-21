@@ -1,0 +1,73 @@
+name: release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+
+  # 创建发布
+  release:
+    runs-on: ubuntu-latest
+    # 输出变量
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+
+  # 打包上传
+  build-windows-app:
+    needs: release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install and build frontend
+        run: |
+          npm install
+          npm run build
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          pip install pyinstaller==6.11.1
+          pip install pywebview==5.3.2
+          pip install adbutils==2.8.0
+          pip install loguru==0.7.3
+
+      - name: Build executable
+        run: |
+          pyinstaller build-windows.spec
+
+      - name: Upload executables
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          # 获取变量
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./dist/AdbEasy.exe
+          asset_name: AdbEasy.exe
+          asset_content_type: application/octet-stream
+
