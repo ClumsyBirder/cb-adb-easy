@@ -1,0 +1,162 @@
+import {
+  FileText,
+  Boxes,
+  Play,
+  Activity,
+  Terminal,
+  Database,
+  FileJson,
+  Globe,
+} from "lucide-react";
+import { NavMenu } from "@/components/nav-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OverviewTab } from "@/components/overview-tab";
+import { FilesTab } from "@/components/files-tab";
+import { AppsTab } from "@/components/apps-tab";
+import { ProcessTab } from "@/components/process-tab";
+import { PerformanceTab } from "@/components/performance-tab";
+import { TerminalTab } from "@/components/terminal-tab";
+import { BackupTab } from "@/components/backup-tab";
+import { LogsTab } from "@/components/logs-tab";
+import { WebTab } from "@/components/web-tab";
+import { useState } from "react";
+
+function App() {
+  const [deviceInfo, setDeviceInfo] = useState<API.DeviceInfo | null>(null);
+
+  const fetchDeviceInfo = async (serial: string) => {
+    try {
+      const res = await window.pywebview.api.device_info(serial);
+      setDeviceInfo(res);
+    } catch (error) {
+      console.error("Error fetching device info:", error);
+    }
+  };
+
+  const handleDeviceChange = (serial: string) => {
+    fetchDeviceInfo(serial).then((r) => console.log(r));
+  };
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <NavMenu onDeviceChange={handleDeviceChange} />
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="h-12 p-0 bg-transparent border-b rounded-none">
+          <TabsTrigger
+            value="overview"
+            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+          >
+            概览
+          </TabsTrigger>
+          <TabsTrigger
+            value="files"
+            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            文件
+          </TabsTrigger>
+          <TabsTrigger
+            value="apps"
+            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+          >
+            <Boxes className="w-4 h-4 mr-2" />
+            应用
+          </TabsTrigger>
+          <TabsTrigger
+            value="process"
+            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            进程
+          </TabsTrigger>
+          <TabsTrigger
+            value="performance"
+            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+          >
+            <Activity className="w-4 h-4 mr-2" />
+            性能
+          </TabsTrigger>
+          <TabsTrigger
+            value="terminal"
+            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+          >
+            <Terminal className="w-4 h-4 mr-2" />
+            终端
+          </TabsTrigger>
+          <TabsTrigger
+            value="backup"
+            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+          >
+            <Database className="w-4 h-4 mr-2" />
+            备库
+          </TabsTrigger>
+          <TabsTrigger
+            value="logs"
+            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+          >
+            <FileJson className="w-4 h-4 mr-2" />
+            日志
+          </TabsTrigger>
+          <TabsTrigger
+            value="web"
+            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+          >
+            <Globe className="w-4 h-4 mr-2" />
+            网页
+          </TabsTrigger>
+        </TabsList>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <TabsContent value="overview" className="m-0">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                {/*<OverviewTab />*/}
+                {deviceInfo && <OverviewTab deviceInfo={deviceInfo} />}
+              </div>
+            </TabsContent>
+            <TabsContent value="files" className="m-0">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <FilesTab />
+              </div>
+            </TabsContent>
+            <TabsContent value="apps" className="m-0">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <AppsTab />
+              </div>
+            </TabsContent>
+            <TabsContent value="process" className="m-0">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <ProcessTab />
+              </div>
+            </TabsContent>
+            <TabsContent value="performance" className="m-0">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <PerformanceTab />
+              </div>
+            </TabsContent>
+            <TabsContent value="terminal" className="m-0">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <TerminalTab />
+              </div>
+            </TabsContent>
+            <TabsContent value="backup" className="m-0">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <BackupTab />
+              </div>
+            </TabsContent>
+            <TabsContent value="logs" className="m-0">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <LogsTab />
+              </div>
+            </TabsContent>
+            <TabsContent value="web" className="m-0">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <WebTab />
+              </div>
+            </TabsContent>
+          </div>
+        </div>
+      </Tabs>
+    </div>
+  );
+}
+
+export default App;
