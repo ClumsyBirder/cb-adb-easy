@@ -94,12 +94,9 @@ export function TerminalTab() {
 
   const renderCPUCores = () => {
     return cpuCores.map((core, index) => (
-      <div
-        key={index}
-        className="border rounded-lg p-4 bg-white dark:bg-gray-800"
-      >
+      <div key={index} className="border rounded-lg p-4 bg-white">
         <div className="flex justify-between items-center mb-2">
-          <div className="text-sm font-medium dark:text-gray-200">
+          <div className="text-sm font-medium ">
             CPU{index} {core.frequency}
           </div>
           <div className="text-sm text-green-500">{core.usage}%</div>
@@ -138,16 +135,16 @@ export function TerminalTab() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold dark:text-gray-200">性能监控</h2>
+        <h2 className="text-lg font-semibold">性能监控</h2>
         <Button variant="outline" onClick={() => setIsRunning(!isRunning)}>
           {isRunning ? "停止" : "开始"}
         </Button>
       </div>
 
       {/* Main CPU Usage */}
-      <div className="border rounded-lg p-4 bg-white dark:bg-gray-800">
+      <div className="border rounded-lg p-4 bg-white ">
         <div className="flex justify-between items-center mb-2">
-          <div className="text-sm font-medium dark:text-gray-200">CPU</div>
+          <div className="text-sm font-medium">CPU</div>
           <div className="text-sm text-green-500">
             {cpuData[cpuData.length - 1]?.value ?? 0}%
           </div>

@@ -201,7 +201,7 @@ def update_ticker():
 if __name__ == '__main__':
     RENDERER_URL = "http://localhost:5173"
     APP_VERSION = "v0.1.0"
-    window = webview.create_window('CB Adb Easy {}'.format(APP_VERSION), entry, js_api=Api(), width=1280,
+    window = webview.create_window('CBAdbEasy {}'.format(APP_VERSION), entry, js_api=Api(), width=1280,
                                    height=700,
                                    min_size=(1280, 700), )
     webview.start(update_ticker)

@@ -37,73 +37,78 @@ function App() {
     fetchDeviceInfo(serial).then((r) => console.log(r));
   };
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavMenu onDeviceChange={handleDeviceChange} />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="h-12 p-0 bg-transparent border-b rounded-none">
-          <TabsTrigger
-            value="overview"
-            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-          >
-            概览
-          </TabsTrigger>
-          <TabsTrigger
-            value="files"
-            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-          >
-            <FileText className="w-4 h-4 mr-2" />
-            文件
-          </TabsTrigger>
-          <TabsTrigger
-            value="apps"
-            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-          >
-            <Boxes className="w-4 h-4 mr-2" />
-            应用
-          </TabsTrigger>
-          <TabsTrigger
-            value="process"
-            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-          >
-            <Play className="w-4 h-4 mr-2" />
-            进程
-          </TabsTrigger>
-          <TabsTrigger
-            value="performance"
-            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-          >
-            <Activity className="w-4 h-4 mr-2" />
-            性能
-          </TabsTrigger>
-          <TabsTrigger
-            value="terminal"
-            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-          >
-            <Terminal className="w-4 h-4 mr-2" />
-            终端
-          </TabsTrigger>
-          <TabsTrigger
-            value="backup"
-            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-          >
-            <Database className="w-4 h-4 mr-2" />
-            备库
-          </TabsTrigger>
-          <TabsTrigger
-            value="logs"
-            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-          >
-            <FileJson className="w-4 h-4 mr-2" />
-            日志
-          </TabsTrigger>
-          <TabsTrigger
-            value="web"
-            className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-          >
-            <Globe className="w-4 h-4 mr-2" />
-            网页
-          </TabsTrigger>
-        </TabsList>
+        <div className="sticky top-0 z-10 bg-white shadow">
+          <div className="flex items-center px-4">
+            <NavMenu onDeviceChange={handleDeviceChange} />
+            <TabsList className="h-12 p-0 bg-white border-b rounded-none sticky top-12 z-10">
+              <TabsTrigger
+                value="overview"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                概览
+              </TabsTrigger>
+              <TabsTrigger
+                value="files"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                文件
+              </TabsTrigger>
+              <TabsTrigger
+                value="apps"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                <Boxes className="w-4 h-4 mr-2" />
+                应用
+              </TabsTrigger>
+              <TabsTrigger
+                value="process"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                进程
+              </TabsTrigger>
+              <TabsTrigger
+                value="performance"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                <Activity className="w-4 h-4 mr-2" />
+                性能
+              </TabsTrigger>
+              <TabsTrigger
+                value="terminal"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                <Terminal className="w-4 h-4 mr-2" />
+                终端
+              </TabsTrigger>
+              <TabsTrigger
+                value="backup"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                <Database className="w-4 h-4 mr-2" />
+                备库
+              </TabsTrigger>
+              <TabsTrigger
+                value="logs"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                <FileJson className="w-4 h-4 mr-2" />
+                日志
+              </TabsTrigger>
+              <TabsTrigger
+                value="web"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                <Globe className="w-4 h-4 mr-2" />
+                网页
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
+
         <div className="p-6">
           <div className="max-w-6xl mx-auto">
             <TabsContent value="overview" className="m-0">

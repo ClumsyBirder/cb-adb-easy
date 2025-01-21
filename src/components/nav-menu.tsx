@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
-import { ThemeToggle } from "@/components/theme-toggle";
+// import { ThemeToggle } from "@/components/theme-toggle";
 
 export function NavMenu({
   onDeviceChange,
@@ -68,7 +68,7 @@ export function NavMenu({
             <RotateCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
-        <ThemeToggle />
+        {/*<ThemeToggle />*/}
       </div>
     </div>
   );
