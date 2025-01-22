@@ -15,11 +15,38 @@ from time import time
 from adbutils import adb
 from loguru import logger
 
+from src.service.adb.memory import MemoryMonitor
+
 
 class Api:
 
     def __init__(self):
         self.device = None
+
+    def get_pid(self, package_name):
+
+        commands = 'ps -A| grep {}'.format(package_name)
+        result = self.device.shell(commands)
+        str_ret = result.split('\n')
+        pid = '-1'
+        for strs in str_ret:
+            if strs == '':
+                continue
+            str_list = strs.split(' ')
+            str_list_result = []
+            for info in str_list:
+                if info != '':
+                    str_list_result.append(info)
+            str_pacackage = str_list_result[8]
+            if str_pacackage == package_name:
+                return str_list_result[1]
+
+        return pid
+
+    def get_sdk_version(self):
+
+        sdk_version = self.device.shell("getprop ro.build.version.sdk").strip()
+        return int(sdk_version)
 
     def get_device_list(self):
         device_list = []
@@ -155,6 +182,10 @@ class Api:
 
     def ls(self):
         return os.listdir('.')
+
+    def get_memory_info(self, package_name: str):
+
+        return MemoryMonitor(self.device).get_mem_info(self.get_pid(package_name), 24, package_name)
 
 
 def get_entrypoint():
