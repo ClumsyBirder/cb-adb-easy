@@ -12,7 +12,7 @@ import threading
 import webview
 
 from time import time
-from adbutils import adb
+from adbutils import adb, AdbDevice
 from loguru import logger
 
 from src.service.adb.memory import MemoryMonitor
@@ -21,7 +21,7 @@ from src.service.adb.memory import MemoryMonitor
 class Api:
 
     def __init__(self):
-        self.device = None
+        self.device: AdbDevice
 
     def get_pid(self, package_name):
 
@@ -115,7 +115,7 @@ class Api:
         packages = self.device.shell(command)
         trimmed_result = packages.strip()
         lines = trimmed_result.split('\n')
-        processed_lines = [line[8:] for line in lines]
+        processed_lines = [{'name': line[8:], 'packageName': line[8:], 'id': i} for i, line in enumerate(lines)]
         logger.debug(processed_lines)
         return processed_lines
 
@@ -169,6 +169,37 @@ class Api:
             processes.append(process)
         logger.debug(processes)
         return processes
+
+    def install_package(self):
+        filename = webview.windows[0].create_file_dialog(webview.OPEN_DIALOG)
+        logger.debug(filename)
+        if not filename:
+            return
+        self.device.install(filename[0])
+
+    def uninstall_package(self, package_name):
+        self.device.uninstall(package_name)
+        return True
+
+    def clear_package(self, package_name):
+        self.device.shell(f'pm clear {package_name}')
+        return True
+
+    def start_package(self, package_name):
+        self.device.shell(f'am start -n {package_name}')
+        return True
+
+    def stop_package(self, package_name):
+        self.device.shell(f'am force-stop {package_name}')
+        return True
+
+    def disable_package(self, package_name):
+        self.device.shell(f'pm disable-user {package_name}')
+        return True
+
+    def enable_package(self, package_name):
+        self.device.shell(f'pm enable {package_name}')
+        return True
 
     def fullscreen(self):
         webview.windows[0].toggle_fullscreen()

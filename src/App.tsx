@@ -21,21 +21,22 @@ import { LogsTab } from "@/components/logs-tab";
 import { WebTab } from "@/components/web-tab";
 import { useDeviceStore } from "@/store/device-store";
 import { useEffect } from "react";
-
+import { Toaster } from "@/components/ui/toaster";
 function App() {
-  const { deviceInfo, fetchDevices } = useDeviceStore()
-  const fetchDeviceInfo = useDeviceStore(state => state.fetchDeviceInfo)
+  const { deviceInfo, fetchDevices } = useDeviceStore();
+  const fetchDeviceInfo = useDeviceStore((state) => state.fetchDeviceInfo);
 
   useEffect(() => {
     // 应用启动时加载设备列表
-    fetchDevices()
-  }, [])
+    fetchDevices();
+  }, []);
 
   const handleDeviceChange = (serial: string) => {
-    fetchDeviceInfo(serial)
+    fetchDeviceInfo(serial);
   };
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Toaster />
       <Tabs defaultValue="overview" className="w-full">
         <div className="sticky top-0 z-10 bg-white shadow">
           <div className="flex items-center px-4">

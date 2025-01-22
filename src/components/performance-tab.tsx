@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/chart";
 import { usePerformanceStore } from "@/store/performance-store";
 import { useAppsStore } from "@/store/apps-store";
+import { Pause, Play, RotateCw } from "lucide-react";
 
 const chartConfig = {
   JavaHeap: {
@@ -201,14 +202,20 @@ export function PerformanceTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
+        {(selectedPackage && (
+          <div className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm  mr-auto">
+            <img
+              src={"/vite.svg"}
+              alt={selectedPackage}
+              className="w-6 h-6 mr-4"
+            />
+            <span>{selectedPackage}</span>
+          </div>
+        )) || <span className="mr-auto">请先选择应用</span>}
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium whitespace-nowrap">当前应用:</label>
-          <span className="text-sm">
-            {selectedPackage || "请在应用页面选择要监控的应用"}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium whitespace-nowrap">更新间隔:</label>
+          <label className="text-sm font-medium whitespace-nowrap">
+            更新间隔:
+          </label>
           <input
             type="number"
             value={updateInterval}
@@ -220,13 +227,20 @@ export function PerformanceTab() {
           />
           <span className="text-sm text-gray-500">ms</span>
         </div>
-        <Button 
-          className="rounded h-8" 
+        <Button
+          className="h-7"
           onClick={handleToggle}
           variant={isRunning ? "destructive" : "default"}
           disabled={!selectedPackage}
         >
-          {isRunning ? "停止" : "开始"}
+          {isRunning ? (
+            // <Pause className="h-4 w-4" />
+            <RotateCw
+              className={`h-4 w-4 ${isRunning ? "animate-spin" : ""}`}
+            />
+          ) : (
+            <Play className="h-4 w-4" />
+          )}
         </Button>
       </div>
       {processNames.map(renderProcessChart)}
