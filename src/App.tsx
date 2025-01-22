@@ -19,22 +19,20 @@ import { TerminalTab } from "@/components/terminal-tab";
 import { BackupTab } from "@/components/backup-tab";
 import { LogsTab } from "@/components/logs-tab";
 import { WebTab } from "@/components/web-tab";
-import { useState } from "react";
+import { useDeviceStore } from "@/store/device-store";
+import { useEffect } from "react";
 
 function App() {
-  const [deviceInfo, setDeviceInfo] = useState<API.DeviceInfo | null>(null);
+  const { deviceInfo, fetchDevices } = useDeviceStore()
+  const fetchDeviceInfo = useDeviceStore(state => state.fetchDeviceInfo)
 
-  const fetchDeviceInfo = async (serial: string) => {
-    try {
-      const res = await window.pywebview.api.device_info(serial);
-      setDeviceInfo(res);
-    } catch (error) {
-      console.error("Error fetching device info:", error);
-    }
-  };
+  useEffect(() => {
+    // 应用启动时加载设备列表
+    fetchDevices()
+  }, [])
 
   const handleDeviceChange = (serial: string) => {
-    fetchDeviceInfo(serial).then((r) => console.log(r));
+    fetchDeviceInfo(serial)
   };
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

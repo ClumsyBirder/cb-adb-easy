@@ -1,82 +1,60 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-
+import { useAppsStore } from "@/store/apps-store";
+import { Loader2 } from "lucide-react";
 
 interface App {
   id: string;
   name: string;
   icon: string;
   isSystem: boolean;
+  packageName: string;
 }
-const apps: App[] = [
-  {
-    id: "1",
-    name: "讯飞输入法",
-    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250120235843.png-Y4IVEAIcYcBw0albiB6Z16ufDIaVgB.jpeg",
-    isSystem: false,
-  },
-  {
-    id: "2",
-    name: "宿了么",
-    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250120235843.png-Y4IVEAIcYcBw0albiB6Z16ufDIaVgB.jpeg",
-    isSystem: false,
-  },
-  {
-    id: "3",
-    name: "L-ink",
-    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250120235843.png-Y4IVEAIcYcBw0albiB6Z16ufDIaVgB.jpeg",
-    isSystem: false,
-  },
-  {
-    id: "4",
-    name: "中国移动",
-    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250120235843.png-Y4IVEAIcYcBw0albiB6Z16ufDIaVgB.jpeg",
-    isSystem: false,
-  },
-  {
-    id: "5",
-    name: "我的服务",
-    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250120235843.png-Y4IVEAIcYcBw0albiB6Z16ufDIaVgB.jpeg",
-    isSystem: true,
-  },
-  {
-    id: "6",
-    name: "微信",
-    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250120235843.png-Y4IVEAIcYcBw0albiB6Z16ufDIaVgB.jpeg",
-    isSystem: false,
-  },
-  {
-    id: "7",
-    name: "QQ安全中心",
-    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250120235843.png-Y4IVEAIcYcBw0albiB6Z16ufDIaVgB.jpeg",
-    isSystem: true,
-  },
-  {
-    id: "8",
-    name: "com.lmiot",
-    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250120235843.png-Y4IVEAIcYcBw0albiB6Z16ufDIaVgB.jpeg",
-    isSystem: true,
-  },
-  {
-    id: "9",
-    name: "小米文档",
-    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250120235843.png-Y4IVEAIcYcBw0albiB6Z16ufDIaVgB.jpeg",
-    isSystem: true,
-  },
-  // Add more apps as needed
-];
+
 export function AppsTab() {
+  const { setSelectedPackage } = useAppsStore();
   const [filter, setFilter] = useState("");
   const [showSystemApps, setShowSystemApps] = useState(false);
+  const [apps, setApps] = useState<App[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchApps = async (showSystem: boolean) => {
+    try {
+      setLoading(true);
+      const response = await window.pywebview.api.get_packages(showSystem);
+      setApps(response);
+    } catch (error) {
+      console.error("Failed to fetch apps:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchApps(showSystemApps);
+  }, [showSystemApps]);
 
   const filteredApps = apps.filter((app) => {
-    const matchesFilter = app.name.toLowerCase().includes(filter.toLowerCase());
-    if (showSystemApps) {
-      return matchesFilter && app.isSystem;
-    }
-    return matchesFilter;
+    return app.name.toLowerCase().includes(filter.toLowerCase());
   });
+
+  const handleAppSelect = (packageName: string) => {
+    setSelectedPackage(packageName);
+  };
+
+  const handleSystemAppsChange = (checked: boolean) => {
+    setShowSystemApps(checked);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -90,7 +68,7 @@ export function AppsTab() {
           <Checkbox
             id="system"
             checked={showSystemApps}
-            onCheckedChange={(checked) => setShowSystemApps(checked as boolean)}
+            onCheckedChange={(checked) => handleSystemAppsChange(checked as boolean)}
           />
           <label
             htmlFor="system"
@@ -109,6 +87,7 @@ export function AppsTab() {
           <div
             key={app.id}
             className="flex flex-col items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+            onClick={() => handleAppSelect(app.packageName)}
           >
             <div className="w-12 h-12 mb-2">
               <img

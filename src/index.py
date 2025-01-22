@@ -116,6 +116,7 @@ class Api:
         trimmed_result = packages.strip()
         lines = trimmed_result.split('\n')
         processed_lines = [line[8:] for line in lines]
+        logger.debug(processed_lines)
         return processed_lines
 
     def get_processes(self):
@@ -232,10 +233,7 @@ def update_ticker():
 if __name__ == '__main__':
     RENDERER_URL = "http://localhost:5173"
     APP_VERSION = "v0.1.0"
-    window = webview.create_window('CBAdbEasy {}'.format(APP_VERSION), entry, js_api=Api(), width=1280,
+    window = webview.create_window('CBAdbEasy {}'.format(APP_VERSION), RENDERER_URL, js_api=Api(), width=1280,
                                    height=700,
                                    min_size=(1280, 700), )
     webview.start(update_ticker)
-    # api = Api()
-    # api.device_info('119.29.201.189:41034')
-    # print(api.get_processes())

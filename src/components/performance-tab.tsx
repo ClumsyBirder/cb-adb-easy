@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import {
   ChartConfig,
@@ -16,26 +15,9 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { usePerformanceStore } from "@/store/performance-store";
+import { useAppsStore } from "@/store/apps-store";
 
-interface ProcessMemoryInfo {
-  "Java Heap": number;
-  "Native Heap": number;
-  Code: number;
-  Stack: number;
-  Graphics: number;
-  "Private Other": number;
-  System: number;
-  "TOTAL PSS": number;
-}
-
-interface MemoryResponse {
-  [processName: string]: ProcessMemoryInfo;
-}
-
-interface DataPoint extends ProcessMemoryInfo {
-  time: string;
-  process: string;
-}
 const chartConfig = {
   JavaHeap: {
     label: "Java Heap",
@@ -71,52 +53,36 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 export function PerformanceTab() {
-  const [isRunning, setIsRunning] = useState(true);
-  const [memoryData, setMemoryData] = useState<DataPoint[]>([]);
-  const [processes, setProcesses] = useState<string[]>([]);
+  const {
+    isRunning,
+    timePoints,
+    updateInterval,
+    startMonitoring,
+    stopMonitoring,
+    setUpdateInterval,
+  } = usePerformanceStore();
 
-  const generateTimeString = useCallback(() => {
-    const now = new Date();
-    return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
-  }, []);
+  const selectedPackage = useAppsStore((state) => state.selectedPackage);
 
-  const updateData = useCallback(async () => {
-    const newTime = generateTimeString();
-    try {
-      const response: MemoryResponse =
-        await window.pywebview.api.get_memory_info("com.tencent.mm");
-
-      const currentProcesses = Object.keys(response);
-      if (JSON.stringify(currentProcesses) !== JSON.stringify(processes)) {
-        setProcesses(currentProcesses);
-      }
-
-      setMemoryData((prev) => {
-        return [
-          ...prev,
-          ...currentProcesses.map((processName) => ({
-            time: newTime,
-            process: processName,
-            ...response[processName],
-          })),
-        ];
-      });
-    } catch (error) {
-      console.error("Failed to fetch memory data:", error);
+  const handleToggle = () => {
+    if (!selectedPackage) {
+      // 可以添加一个提示，告诉用户需要先选择应用
+      return;
     }
-  }, [generateTimeString, processes]);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRunning) {
-      updateData();
-      interval = setInterval(updateData, 1000);
+    if (!isRunning) {
+      startMonitoring(selectedPackage);
+    } else {
+      stopMonitoring();
     }
-    return () => clearInterval(interval);
-  }, [isRunning, updateData]);
+  };
 
   const renderProcessChart = (processName: string) => {
-    const processData = memoryData.filter((d) => d.process === processName);
+    // 转换数据格式以适应图表
+    const chartData = timePoints.map((point) => ({
+      time: point.time,
+      ...point.processes[processName],
+    }));
 
     const formatYAxis = (value: number) => `${value} MB`;
 
@@ -135,7 +101,7 @@ export function PerformanceTab() {
           >
             <LineChart
               accessibilityLayer
-              data={processData}
+              data={chartData}
               margin={{
                 left: 12,
                 right: 12,
@@ -161,7 +127,7 @@ export function PerformanceTab() {
                 cursor={false}
                 content={<ChartTooltipContent className="w-[150px]" />}
               />
-              <ChartLegend content={<ChartLegendContent />} />
+              {/* <ChartLegend content={<ChartLegendContent />} /> */}
 
               <Line
                 dataKey="Java Heap"
@@ -226,17 +192,44 @@ export function PerformanceTab() {
     );
   };
 
+  // 获取当前所有进程名称
+  const processNames =
+    timePoints.length > 0
+      ? Object.keys(timePoints[timePoints.length - 1].processes)
+      : [];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
-        <Button
-          className={"rounded h-8"}
-          onClick={() => setIsRunning(!isRunning)}
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium whitespace-nowrap">当前应用:</label>
+          <span className="text-sm">
+            {selectedPackage || "请在应用页面选择要监控的应用"}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium whitespace-nowrap">更新间隔:</label>
+          <input
+            type="number"
+            value={updateInterval}
+            onChange={(e) => setUpdateInterval(Number(e.target.value))}
+            className="rounded border px-2 py-1 w-24"
+            min={100}
+            step={100}
+            disabled={isRunning}
+          />
+          <span className="text-sm text-gray-500">ms</span>
+        </div>
+        <Button 
+          className="rounded h-8" 
+          onClick={handleToggle}
+          variant={isRunning ? "destructive" : "default"}
+          disabled={!selectedPackage}
         >
           {isRunning ? "停止" : "开始"}
         </Button>
       </div>
-      {processes.map((processName) => renderProcessChart(processName))}
+      {processNames.map(renderProcessChart)}
     </div>
   );
 }
