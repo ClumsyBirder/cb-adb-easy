@@ -1,8 +1,36 @@
-# Android Device Manager
+<div align="center" >
+  <img src="docs/adbv-icon.png" width="200">
+  <h1>
+    ADB Easy v0.1.3 <img src="docs/Waving Hand Medium-Light Skin Tone.png" width="45px">
+  </h1>
+</div>
+
+
+<p align="center" >
+  <a href="">
+      <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" height="25">
+  </a>
+  <a href="https://github.com/r0x0r/pywebview">
+      <img src="https://img.shields.io/badge/PyWebview-E92063?logo=pydantic&logoColor=fff&style=for-the-badge" alt="Pywebview" height="25">
+  </a>
+
+</p>
+
+> 缓慢开发功能...
 
 一个用于管理和监控 Android 设备的桌面应用程序。
 
-## 功能特性
+
+### 🎉 技术栈
+
+- ⚡️ **React**
+- 📚 **Shadcn/ui**
+- 🚀 **Zustand**
+- 🦾 **PyWebView**
+- 🔐 **ADB**
+- 🚚 **Python**
+
+### 🎃 功能特性
 
 - 设备管理
   - 多设备连接和切换
@@ -38,46 +66,34 @@
   - 可配置的数据采集间隔
   - 图表可视化展示
 
-- 终端功能
-  - 命令行交互
-  - ADB 命令执行
-
-- 备份功能
-  - 应用数据备份
-  - 系统设置备份
-
 - 日志功能
   - 系统日志查看
   - 应用日志查看
 
-- 网页调试
-  - WebView 调试
-  - 网页检查器
+### 📚 演示图
+<div align="center">
+    <img src="/docs/20250106100144.png" alt="图片1" width="45%" style="margin-right: 10px;">
+    <img src="/docs/20250123175824.png" alt="图片2" width="45%" style="margin-right: 10px;">
+</div>
+<div align="center">
+    <img src="/docs/20250123180100.png" alt="图片1" width="45%" style="margin-right: 10px;">
+    <img src="/docs/20250123180200.png" alt="图片2" width="45%" style="margin-right: 10px;">
+</div>
+<div align="center">
+    <img src="/docs/20250123175908.png" alt="图片1" width="45%" style="margin-right: 10px;">
+    <img src="/docs/20250123180023.png" alt="图片2" width="45%" style="margin-right: 10px;">
+</div>
 
-## 技术栈
 
-- Frontend:
-  - React
-  - TypeScript
-  - Zustand (状态管理)
-  - Recharts (图表库)
-  - Tailwind CSS (样式)
-  - Shadcn/ui (UI组件)
+### ☕ 开发指南
 
-- Backend:
-  - Python
-  - PyWebView
-  - ADB
-
-## 开发指南
-
-### 环境要求
+#### 环境要求
 
 - Node.js >= 16
 - Python >= 3.8
 - ADB 工具
 
-### 安装步骤
+#### 安装步骤
 
 1. 克隆仓库
 
@@ -96,7 +112,7 @@ yarn install
 ```bash
 pip install -r requirements.txt
 ```
-### 开发命令
+#### 开发命令
 
 ```bash
 启动开发服务器
@@ -107,7 +123,7 @@ npm run build
 npm run test
 
 ```
-## 项目结构
+### 项目结构
 ```
 src/
 ├── components/ # React 组件
@@ -122,7 +138,7 @@ src/
 
 ```
 
-## 贡献指南
+### 贡献指南
 
 1. Fork 项目
 2. 创建特性分支 (`git checkout -b feature/amazing-feature`)
@@ -130,10 +146,26 @@ src/
 4. 推送到分支 (`git push origin feature/amazing-feature`)
 5. 开启 Pull Request
 
-## 许可证
+### 许可证
 
 [许可证类型] - 查看 [LICENSE](LICENSE) 文件了解更多详情
 
-## 联系方式
+#### <img src="docs/Robot.png" width="25"> 作者介绍
 
-[项目维护者联系信息]
+    大家好，我是 wieszheng，一个乐于分享，喜欢钻研技术的测试开发工程师。
+
+    一个打游戏不拿首胜不睡觉的酒0后。
+
+
+#### <img src="docs/Heart on Fire.png" width="25"> 喜欢我？
+
+<p align="center">
+<a href="https://star-history.com/#ClumsyBirder/cb-adb-easy">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ClumsyBirder/cb-adb-easy&type=Date&title=50&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=ClumsyBirder/cb-adb-easy&type=Date&title=50" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ClumsyBirder/cb-adb-easy&type=Date" />
+  </picture>
+</a>
+</p>
+
