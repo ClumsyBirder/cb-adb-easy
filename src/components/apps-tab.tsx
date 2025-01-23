@@ -6,6 +6,7 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import {
@@ -15,7 +16,17 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Play, Trash, RefreshCcw, Loader2, BadgePlus } from "lucide-react";
+import {
+  Play,
+  Trash,
+  Loader2,
+  BadgePlus,
+  Pause,
+  ShieldBan,
+  ShieldCheck,
+  Eraser,
+  ArrowDownToLine,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface App {
@@ -31,17 +42,14 @@ export function AppsTab() {
   const [filter, setFilter] = useState("");
   const [showSystemApps, setShowSystemApps] = useState(false);
   const [apps, setApps] = useState<App[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<{
+    type: string;
+    packageName: string;
+  } | null>(null);
+
   const fetchApps = async (showSystem: boolean) => {
-    try {
-      setLoading(true);
-      const response = await window.pywebview.api.get_packages(showSystem);
-      setApps(response);
-    } catch (error) {
-      console.error("Failed to fetch apps:", error);
-    } finally {
-      setLoading(false);
-    }
+    const response = await window.pywebview.api.get_packages(showSystem);
+    setApps(response);
   };
 
   useEffect(() => {
@@ -56,37 +64,66 @@ export function AppsTab() {
     setShowSystemApps(checked);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[200px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
   const handleAppClick = (packageName: string) => {
     setSelectedPackage(packageName);
   };
-  const handleContextMenuAction = (action: string, appId: string) => {
-    switch (action) {
-      case "start":
-        console.log("Starting app:", appId);
-        break;
-      case "stop":
-        console.log("Stopping app:", appId);
-        break;
-      case "restart":
-        console.log("Restarting app:", appId);
-        break;
-      case "uninstall":
-        console.log("Uninstalling app:", appId);
-        break;
-      default:
-        break;
+  const handleContextMenuAction = async (
+    action: string,
+    packageName: string,
+  ) => {
+    try {
+      setActionLoading({ type: action, packageName });
+
+      switch (action) {
+        case "start":
+          console.log("Starting app:", packageName);
+          await window.pywebview.api.start_package(packageName);
+          break;
+        case "stop":
+          console.log("Stopping app:", packageName);
+          await window.pywebview.api.stop_package(packageName);
+          break;
+        case "disable":
+          console.log("disable app:", packageName);
+          await window.pywebview.api.disable_package(packageName);
+          break;
+        case "enable":
+          console.log("enable app:", packageName);
+          await window.pywebview.api.enable_package(packageName);
+          break;
+        case "pull":
+          console.log("pull apk:", packageName);
+          await window.pywebview.api.pull_apk(packageName);
+          break;
+        case "clear":
+          console.log("clear app:", packageName);
+          await window.pywebview.api.clear_package(packageName);
+          break;
+        case "uninstall":
+          console.log("Uninstalling app:", packageName);
+          await window.pywebview.api.uninstall_package(packageName);
+          break;
+        default:
+          break;
+      }
+
+      await fetchApps(showSystemApps);
+    } catch (error) {
+      console.error(`Failed to ${action}:`, error);
+    } finally {
+      setActionLoading(null);
     }
   };
-  const handleOpenApk = () => {
-    window.pywebview.api.install_package();
-    console.log("Opening APK file...");
+  const handleOpenApk = async () => {
+    try {
+      setActionLoading({ type: "install", packageName: "" });
+      await window.pywebview.api.install_package();
+      await fetchApps(showSystemApps);
+    } catch (error) {
+      console.error("Failed to install apk:", error);
+    } finally {
+      setActionLoading(null);
+    }
   };
   return (
     <div className="space-y-4">
@@ -115,12 +152,20 @@ export function AppsTab() {
         <div className="text-sm text-muted-foreground">
           共 {filteredApps.length} 个应用
         </div>
-        <Button onClick={handleOpenApk} className="ml-auto h-7">
-          <BadgePlus className="h-4 w-4" />
+        <Button
+          onClick={handleOpenApk}
+          className="ml-auto h-7"
+          disabled={!!actionLoading}
+        >
+          {actionLoading?.type === "install" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <BadgePlus className="h-4 w-4" />
+          )}
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 max-h-[450px] overflow-auto">
         {filteredApps.map((app) => (
           <ContextMenu key={app.id}>
             <ContextMenuTrigger>
@@ -162,25 +207,61 @@ export function AppsTab() {
             </ContextMenuTrigger>
             <ContextMenuContent>
               <ContextMenuItem
-                onClick={() => handleContextMenuAction("start", app.id)}
+                onClick={() =>
+                  handleContextMenuAction("start", app.packageName)
+                }
               >
                 <Play className="mr-2 h-4 w-4" />
                 <span>启动</span>
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={() => handleContextMenuAction("stop", app.id)}
+                onClick={() => handleContextMenuAction("stop", app.packageName)}
               >
-                <Play className="mr-2 h-4 w-4" />
+                <Pause className="mr-2 h-4 w-4" />
                 <span>停止</span>
               </ContextMenuItem>
+              <ContextMenuSeparator />
               <ContextMenuItem
-                onClick={() => handleContextMenuAction("restart", app.id)}
+                onClick={() =>
+                  handleContextMenuAction("enable", app.packageName)
+                }
               >
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                <span>重启</span>
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                <span>启用</span>
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={() => handleContextMenuAction("uninstall", app.id)}
+                onClick={() =>
+                  handleContextMenuAction("disable", app.packageName)
+                }
+              >
+                <ShieldBan className="mr-2 h-4 w-4" />
+                <span>禁用</span>
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem
+                onClick={() => handleContextMenuAction("pull", app.packageName)}
+                disabled={!!actionLoading}
+              >
+                {actionLoading?.type === "pull" &&
+                actionLoading.packageName === app.packageName ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowDownToLine className="mr-2 h-4 w-4" />
+                )}
+                <span>导出</span>
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() =>
+                  handleContextMenuAction("clear", app.packageName)
+                }
+              >
+                <Eraser className="mr-2 h-4 w-4" />
+                <span>清理</span>
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() =>
+                  handleContextMenuAction("uninstall", app.packageName)
+                }
                 className="text-red-600"
               >
                 <Trash className="mr-2 h-4 w-4" />

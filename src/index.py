@@ -10,12 +10,32 @@ import os
 import re
 import threading
 import webview
+import json
 
 from time import time
 from adbutils import adb, AdbDevice
 from loguru import logger
 
 from src.service.adb.memory import MemoryMonitor
+
+
+def set_interval(interval):
+    def decorator(function):
+        def wrapper(*args, **kwargs):
+            stopped = threading.Event()
+
+            def loop():  # executed in another thread
+                while not stopped.wait(interval):  # until stopped
+                    function(*args, **kwargs)
+
+            t = threading.Thread(target=loop)
+            t.daemon = True  # stop if the program exits
+            t.start()
+            return stopped
+
+        return wrapper
+
+    return decorator
 
 
 class Api:
@@ -175,10 +195,23 @@ class Api:
         logger.debug(filename)
         if not filename:
             return
-        self.device.install(filename[0])
+        self.device.install(filename[0], nolaunch=True)
+        return True
 
     def uninstall_package(self, package_name):
         self.device.uninstall(package_name)
+        return True
+
+    def pull_apk(self, package_name):
+        apk_path = self.device.shell(f'pm path {package_name}').strip().split(':')[-1]
+        if not apk_path:
+            logger.error(f"未找到包名为 {package_name} 的 APK")
+            return False
+        filename = webview.windows[0].create_file_dialog(webview.SAVE_DIALOG, save_filename=f"{package_name}.apk")
+        logger.debug(f"apk_path: {apk_path}  filename: {filename}")
+        if not filename:
+            return
+        self.device.sync.pull_file(apk_path, filename)
         return True
 
     def clear_package(self, package_name):
@@ -219,6 +252,47 @@ class Api:
 
         return MemoryMonitor(self.device).get_mem_info(self.get_pid(package_name), 24, package_name)
 
+    @set_interval(1)
+    def update_logcat(self):
+
+        try:
+            if self.device is None:
+                return
+            self.device.shell("logcat --clear")
+
+            if len(webview.windows) > 0:
+                stream = self.device.shell("logcat", stream=True)
+                with stream:
+                    f = stream.conn.makefile()
+                    while True:
+                        line = f.readline().strip()
+                        if not line:
+                            continue
+                            
+                        # Parse logcat line into components
+                        try:
+                            parts = line.split(None, 5)
+                            if len(parts) >= 6:
+                                date, time, pid, tid, level, message = parts
+                                log_entry = {
+                                    'timestamp': f"{date} {time}",
+                                    'processId': f"{pid}-{tid}",
+                                    'level': level[0],  # First character of level (I/D/W/E/V)
+                                    'message': message,
+                                    'component': message.split(':', 1)[0] if ':' in message else 'unknown',
+                                    'package': 'system'  # Default package name
+                                }
+                                # Send formatted log entry to frontend
+                                logger.debug(f"log_entry: {log_entry}")
+                                js_code = f'window.pywebview.state && window.pywebview.state.addLogEntry({json.dumps(log_entry)})'
+                                webview.windows[0].evaluate_js(js_code)
+                        except Exception as e:
+                            logger.error(f"Error parsing logcat line: {e}")
+                            continue
+                            
+        except Exception as e:
+            logger.error(f"获取 logcat 日志失败: {e}")
+
 
 def get_entrypoint():
     def exists(path):
@@ -233,38 +307,21 @@ def get_entrypoint():
     raise Exception('No index.html found')
 
 
-def set_interval(interval):
-    def decorator(function):
-        def wrapper(*args, **kwargs):
-            stopped = threading.Event()
-
-            def loop():  # executed in another thread
-                while not stopped.wait(interval):  # until stopped
-                    function(*args, **kwargs)
-
-            t = threading.Thread(target=loop)
-            t.daemon = True  # stop if the program exits
-            t.start()
-            return stopped
-
-        return wrapper
-
-    return decorator
-
-
 entry = get_entrypoint()
 
 
 @set_interval(1)
 def update_ticker():
     if len(webview.windows) > 0:
+        logger.debug(f"update_ticker: {time()}")
         webview.windows[0].evaluate_js('window.pywebview.state && window.pywebview.state.set_ticker("%d")' % time())
 
 
 if __name__ == '__main__':
     RENDERER_URL = "http://localhost:5173"
-    APP_VERSION = "v0.1.0"
-    window = webview.create_window('CBAdbEasy {}'.format(APP_VERSION), RENDERER_URL, js_api=Api(), width=1280,
+    APP_VERSION = "v0.1.3"
+    api = Api()
+    window = webview.create_window('CBAdbEasy {}'.format(APP_VERSION), entry, js_api=api, width=1280,
                                    height=700,
                                    min_size=(1280, 700), )
-    webview.start(update_ticker)
+    webview.start(api.update_logcat)

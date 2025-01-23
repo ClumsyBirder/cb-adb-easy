@@ -73,7 +73,7 @@ export function ProcessTab() {
           共 {filteredProcesses.length} 个进程
         </div>
       </div>
-      <div className="border max-h-[400px] overflow-y-auto">
+      <div className="border max-h-[450px] overflow-y-auto">
         <Table>
           <TableHeader>
             <TableRow>

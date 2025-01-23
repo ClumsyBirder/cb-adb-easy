@@ -1,12 +1,12 @@
 import {
-  FileText,
   Boxes,
   Play,
   Activity,
-  Terminal,
-  Database,
+  Zap,
+  // Terminal,
+  // Database,
   FileJson,
-  Globe,
+  // Globe,
 } from "lucide-react";
 import { NavMenu } from "@/components/nav-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,23 +16,24 @@ import { AppsTab } from "@/components/apps-tab";
 import { ProcessTab } from "@/components/process-tab";
 import { PerformanceTab } from "@/components/performance-tab";
 import { TerminalTab } from "@/components/terminal-tab";
-import { BackupTab } from "@/components/backup-tab";
+import { InstructTab } from "@/components/instruct-tab";
 import { LogsTab } from "@/components/logs-tab";
-import { WebTab } from "@/components/web-tab";
 import { useDeviceStore } from "@/store/device-store";
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
+import { usePythonState } from "@/hooks/pythonBridge";
+
 function App() {
   const { deviceInfo, fetchDevices } = useDeviceStore();
   const fetchDeviceInfo = useDeviceStore((state) => state.fetchDeviceInfo);
-
+  usePythonState("ticker");
   useEffect(() => {
     // 应用启动时加载设备列表
-    fetchDevices();
+    fetchDevices().then((r) => console.log(r));
   }, []);
 
-  const handleDeviceChange = (serial: string) => {
-    fetchDeviceInfo(serial);
+  const handleDeviceChange = async (serial: string) => {
+    await fetchDeviceInfo(serial);
   };
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -47,13 +48,6 @@ function App() {
                 className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
               >
                 概览
-              </TabsTrigger>
-              <TabsTrigger
-                value="files"
-                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                文件
               </TabsTrigger>
               <TabsTrigger
                 value="apps"
@@ -76,19 +70,26 @@ function App() {
                 <Activity className="w-4 h-4 mr-2" />
                 性能
               </TabsTrigger>
-              <TabsTrigger
-                value="terminal"
-                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-              >
-                <Terminal className="w-4 h-4 mr-2" />
-                终端
-              </TabsTrigger>
+              {/*<TabsTrigger*/}
+              {/*  value="files"*/}
+              {/*  className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"*/}
+              {/*>*/}
+              {/*  <FileText className="w-4 h-4 mr-2" />*/}
+              {/*  文件*/}
+              {/*</TabsTrigger>*/}
+              {/*<TabsTrigger*/}
+              {/*  value="terminal"*/}
+              {/*  className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"*/}
+              {/*>*/}
+              {/*  <Terminal className="w-4 h-4 mr-2" />*/}
+              {/*  终端*/}
+              {/*</TabsTrigger>*/}
               <TabsTrigger
                 value="backup"
                 className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
               >
-                <Database className="w-4 h-4 mr-2" />
-                备库
+                <Zap className="w-4 h-4 mr-2" />
+                快捷指令
               </TabsTrigger>
               <TabsTrigger
                 value="logs"
@@ -97,30 +98,18 @@ function App() {
                 <FileJson className="w-4 h-4 mr-2" />
                 日志
               </TabsTrigger>
-              <TabsTrigger
-                value="web"
-                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-              >
-                <Globe className="w-4 h-4 mr-2" />
-                网页
-              </TabsTrigger>
             </TabsList>
           </div>
         </div>
 
         <div className="p-6">
-          <div className="max-w-6xl mx-auto">
+          <div className="mx-auto">
             <TabsContent value="overview" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                {/*<OverviewTab />*/}
                 {deviceInfo && <OverviewTab deviceInfo={deviceInfo} />}
               </div>
             </TabsContent>
-            <TabsContent value="files" className="m-0">
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <FilesTab />
-              </div>
-            </TabsContent>
+
             <TabsContent value="apps" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
                 <AppsTab />
@@ -136,6 +125,11 @@ function App() {
                 <PerformanceTab />
               </div>
             </TabsContent>
+            <TabsContent value="files" className="m-0">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <FilesTab />
+              </div>
+            </TabsContent>
             <TabsContent value="terminal" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
                 <TerminalTab />
@@ -143,17 +137,12 @@ function App() {
             </TabsContent>
             <TabsContent value="backup" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <BackupTab />
+                <InstructTab />
               </div>
             </TabsContent>
             <TabsContent value="logs" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
                 <LogsTab />
-              </div>
-            </TabsContent>
-            <TabsContent value="web" className="m-0">
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <WebTab />
               </div>
             </TabsContent>
           </div>

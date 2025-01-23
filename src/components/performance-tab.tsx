@@ -10,14 +10,12 @@ import { Button } from "@/components/ui/button.tsx";
 import {
   ChartConfig,
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { usePerformanceStore } from "@/store/performance-store";
 import { useAppsStore } from "@/store/apps-store";
-import { Pause, Play, RotateCw } from "lucide-react";
+import { Play, RotateCw } from "lucide-react";
 
 const chartConfig = {
   JavaHeap: {
@@ -72,6 +70,7 @@ export function PerformanceTab() {
     }
 
     if (!isRunning) {
+      timePoints.length = 0;
       startMonitoring(selectedPackage);
     } else {
       stopMonitoring();
@@ -98,7 +97,7 @@ export function PerformanceTab() {
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
           <ChartContainer
             config={chartConfig}
-            className="aspect-auto h-[250px] w-full"
+            className="aspect-auto h-[280px] w-full"
           >
             <LineChart
               accessibilityLayer
@@ -234,7 +233,6 @@ export function PerformanceTab() {
           disabled={!selectedPackage}
         >
           {isRunning ? (
-            // <Pause className="h-4 w-4" />
             <RotateCw
               className={`h-4 w-4 ${isRunning ? "animate-spin" : ""}`}
             />
