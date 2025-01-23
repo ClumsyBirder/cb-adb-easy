@@ -6,6 +6,8 @@
 @Author   : wiesZheng
 @Software : PyCharm
 """
+import base64
+import io
 import os
 import re
 import threading
@@ -234,6 +236,25 @@ class Api:
         self.device.shell(f'pm enable {package_name}')
         return True
 
+    def get_screenshot(self):
+
+        pil_image = self.device.screenshot()
+        with io.BytesIO() as buffered:
+            pil_image.save(buffered, format="PNG")
+            img_byte = buffered.getvalue()
+            img_str = base64.b64encode(img_byte).decode('utf-8')
+            width, height = pil_image.size
+            file_size = round(len(img_byte) / 1024 / 1024, 2)
+            data = {
+                'image': img_str,
+                'width': width,
+                'height': height,
+                'size': file_size
+            }
+            logger.debug(data)
+
+            return data
+
     def fullscreen(self):
         webview.windows[0].toggle_fullscreen()
 
@@ -268,7 +289,7 @@ class Api:
                         line = f.readline().strip()
                         if not line:
                             continue
-                            
+
                         # Parse logcat line into components
                         try:
                             parts = line.split(None, 5)
@@ -289,7 +310,7 @@ class Api:
                         except Exception as e:
                             logger.error(f"Error parsing logcat line: {e}")
                             continue
-                            
+
         except Exception as e:
             logger.error(f"获取 logcat 日志失败: {e}")
 
@@ -321,7 +342,9 @@ if __name__ == '__main__':
     RENDERER_URL = "http://localhost:5173"
     APP_VERSION = "v0.1.3"
     api = Api()
-    window = webview.create_window('CBAdbEasy {}'.format(APP_VERSION), entry, js_api=api, width=1280,
+    window = webview.create_window('CBAdbEasy {}'.format(APP_VERSION), RENDERER_URL, js_api=api, width=1280,
                                    height=700,
                                    min_size=(1280, 700), )
     webview.start(api.update_logcat)
+    # api.device_info('6b971835')
+    # api.get_screenshot()

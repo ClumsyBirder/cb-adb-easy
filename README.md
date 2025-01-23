@@ -11,9 +11,17 @@
       <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" height="25">
   </a>
   <a href="https://github.com/r0x0r/pywebview">
-      <img src="https://img.shields.io/badge/PyWebview-E92063?logo=pydantic&logoColor=fff&style=for-the-badge" alt="Pywebview" height="25">
+      <img src="https://img.shields.io/badge/PyWebview-E97342?logo=d&logoColor=fff&style=for-the-badge" alt="Pywebview" height="25">
   </a>
-
+  <a href="">
+      <img src="https://img.shields.io/badge/React-E92063?logo=react&logoColor=fff&style=for-the-badge" alt="Pywebview" height="25">
+  </a>
+  <a href="">
+      <img src="https://img.shields.io/badge/vite-312063?logo=vite&logoColor=fff&style=for-the-badge" alt="Pywebview" height="25">
+  </a>
+  <a href="">
+      <img src="https://img.shields.io/badge/adb-6f2063?logo=android&logoColor=fff&style=for-the-badge" alt="Pywebview" height="25">
+  </a>
 </p>
 
 > 缓慢开发功能...

@@ -6,6 +6,7 @@ import {
   // Terminal,
   // Database,
   FileJson,
+  ScreenShareOff,
   // Globe,
 } from "lucide-react";
 import { NavMenu } from "@/components/nav-menu";
@@ -22,6 +23,7 @@ import { useDeviceStore } from "@/store/device-store";
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { usePythonState } from "@/hooks/pythonBridge";
+import { ScreenshotTab } from "@/components/screenshot-tab";
 
 function App() {
   const { deviceInfo, fetchDevices } = useDeviceStore();
@@ -69,6 +71,13 @@ function App() {
               >
                 <Activity className="w-4 h-4 mr-2" />
                 性能
+              </TabsTrigger>
+              <TabsTrigger
+                value="screenshot"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                <ScreenShareOff className="w-4 h-4 mr-2" />
+                截屏
               </TabsTrigger>
               {/*<TabsTrigger*/}
               {/*  value="files"*/}
@@ -143,6 +152,11 @@ function App() {
             <TabsContent value="logs" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
                 <LogsTab />
+              </div>
+            </TabsContent>
+            <TabsContent value="screenshot" className="m-0">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <ScreenshotTab />
               </div>
             </TabsContent>
           </div>
