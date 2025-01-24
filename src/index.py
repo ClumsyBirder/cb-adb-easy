@@ -480,7 +480,7 @@ def update_ticker():
 
 if __name__ == '__main__':
     RENDERER_URL = "http://localhost:5173"
-    APP_VERSION = "v0.1.3"
+    APP_VERSION = "v0.1.4"
     api = Api()
     window = webview.create_window('CBAdbEasy {}'.format(APP_VERSION), entry, js_api=api, width=1280,
                                    height=700,
