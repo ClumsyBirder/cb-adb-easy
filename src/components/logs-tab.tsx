@@ -166,7 +166,10 @@ export function LogsTab() {
         />
       </div>
 
-      <div className="relative max-h-[450px] overflow-auto">
+      <div
+        className="relative overflow-auto"
+        style={{ maxHeight: "calc(100vh - 13rem)" }}
+      >
         <Table>
           <TableHeader className="sticky top-0 bg-background z-10">
             <TableRow>

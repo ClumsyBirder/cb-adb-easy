@@ -165,7 +165,10 @@ export function AppsTab() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 max-h-[450px] overflow-auto">
+      <div
+        className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 overflow-auto"
+        style={{ maxHeight: "calc(100vh - 13rem)" }}
+      >
         {filteredApps.map((app) => (
           <ContextMenu key={app.id}>
             <ContextMenuTrigger>

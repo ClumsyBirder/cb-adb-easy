@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface ScreenshotInfo {
   width: number;
@@ -23,6 +24,7 @@ export function ScreenshotTab() {
   const [screenshot, setScreenshot] = useState<ScreenshotInfo>();
   const [isLoading, setIsLoading] = useState(false);
   const transformComponentRef = useRef(null);
+  const { toast } = useToast();
 
   const fetchScreenshot = async () => {
     setIsLoading(true);
@@ -43,12 +45,6 @@ export function ScreenshotTab() {
       console.error("No screenshot available to download");
       return;
     }
-    const link = document.createElement("a");
-    link.href = `data:image/png;base64,${screenshot?.image}`;
-    link.download = `screenshot.png`; // 你可以根据需要更改文件名和扩展名
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const handleCopy = async () => {
@@ -58,45 +54,30 @@ export function ScreenshotTab() {
     }
 
     try {
-      // 创建一个隐藏的 <img> 元素
-      const img = new Image();
-      img.src = `data:image/png;base64,${screenshot.image}`;
-
-      // 等待图像加载完成
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-      });
-
-      // 创建一个 Canvas 元素
+      const img = document.getElementById("image") as HTMLImageElement;
       const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         throw new Error("Failed to get 2D context");
       }
-
-      // 将图像绘制到 Canvas 上
       ctx.drawImage(img, 0, 0);
 
-      // 将 Canvas 内容转换为 Blob
       canvas.toBlob(async (blob) => {
-        if (!blob) {
-          throw new Error("Failed to create blob");
+        if (blob) {
+          const clipboardItem = new ClipboardItem({
+            "image/png": blob,
+          });
+          await navigator.clipboard.write([clipboardItem]);
+          console.log("图片已复制到剪贴板");
         }
-
-        // 创建 ClipboardItem
-        const clipboardItem = new ClipboardItem({
-          "image/png": blob,
-        });
-
-        // 将 ClipboardItem 写入剪贴板
-        await navigator.clipboard.write([clipboardItem]);
-        console.log("Screenshot copied to clipboard");
       }, "image/png");
+      toast({
+        description: "图片已复制到剪贴板",
+      });
     } catch (error) {
-      console.error("Failed to copy screenshot:", error);
+      console.error("制图片失败:", error);
     }
   };
 
@@ -135,7 +116,7 @@ export function ScreenshotTab() {
           {screenshot?.width}x{screenshot?.height} {screenshot?.size} MB
         </div>
       </div>
-
+      <Separator orientation="horizontal" />
       <div className="relative flex-1">
         <TransformWrapper
           ref={transformComponentRef}
@@ -179,7 +160,8 @@ export function ScreenshotTab() {
               >
                 {screenshot && (
                   <img
-                    src={"data:image/png;base64," + screenshot?.image}
+                    id="image"
+                    src={`data:image/png;base64,${screenshot.image}`}
                     alt=""
                     className={cn(
                       "max-h-full w-auto transition-opacity duration-200",
@@ -187,7 +169,7 @@ export function ScreenshotTab() {
                     )}
                     style={{
                       maxWidth: "calc(100vw - 3rem)",
-                      maxHeight: "calc(100vh - 13rem)",
+                      maxHeight: "calc(100vh - 13.8rem)",
                     }}
                   />
                 )}

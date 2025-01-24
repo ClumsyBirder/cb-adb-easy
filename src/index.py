@@ -7,10 +7,13 @@
 @Software : PyCharm
 """
 import base64
+
 import io
 import os
 import re
 import threading
+from enum import Enum
+
 import webview
 import json
 
@@ -19,6 +22,33 @@ from adbutils import adb, AdbDevice
 from loguru import logger
 
 from src.service.adb.memory import MemoryMonitor
+
+
+class FileMode(Enum):
+    # 文件类型 (高位部分)
+    REGULAR_FILE = 0o100000  # 普通文件 (regular file)
+    DIRECTORY = 0o040000  # 目录 (directory)
+    SYMBOLIC_LINK = 0o120000  # 符号链接 (symbolic link)
+    BLOCK_DEVICE = 0o060000  # 块设备 (block device)
+    CHARACTER_DEVICE = 0o020000  # 字符设备 (character device)
+    FIFO = 0o010000  # 命名管道 (FIFO)
+    SOCKET = 0o140000  # 套接字 (socket)
+    # 文件权限位 (低位部分, 以八进制表示)
+    PERM_600 = 0o600  # rw-------
+    PERM_644 = 0o644  # rw-r--r--
+    PERM_755 = 0o755  # rwxr-xr-x
+    PERM_777 = 0o777  # rwxrwxrwx
+
+    def to_decimal(self):
+        """将八进制模式转换为十进制"""
+        return int(self.value)
+
+    def __str__(self):
+        """返回描述信息"""
+        if self.name.startswith("PERM"):
+            return f"Permission: {oct(self.value)} (Decimal: {self.to_decimal()})"
+        else:
+            return f"File Type: {self.name.replace('_', ' ').title()} (Octal: {oct(self.value)}, Decimal: {self.to_decimal()})"
 
 
 def set_interval(interval):
@@ -193,7 +223,8 @@ class Api:
         return processes
 
     def install_package(self):
-        filename = webview.windows[0].create_file_dialog(webview.OPEN_DIALOG)
+        filename = webview.windows[0].create_file_dialog(webview.OPEN_DIALOG, allow_multiple=False,
+                                                         file_types=(".apk",))
         logger.debug(filename)
         if not filename:
             return
@@ -209,7 +240,8 @@ class Api:
         if not apk_path:
             logger.error(f"未找到包名为 {package_name} 的 APK")
             return False
-        filename = webview.windows[0].create_file_dialog(webview.SAVE_DIALOG, save_filename=f"{package_name}.apk")
+        filename = webview.windows[0].create_file_dialog(webview.SAVE_DIALOG, save_filename=f"{package_name}.apk",
+                                                         file_types=(".apk",))
         logger.debug(f"apk_path: {apk_path}  filename: {filename}")
         if not filename:
             return
@@ -266,9 +298,6 @@ class Api:
         with open(filename[0], 'w') as f:
             f.write(content)
 
-    def ls(self):
-        return os.listdir('.')
-
     def get_memory_info(self, package_name: str):
 
         return MemoryMonitor(self.device).get_mem_info(self.get_pid(package_name), 24, package_name)
@@ -314,6 +343,117 @@ class Api:
         except Exception as e:
             logger.error(f"获取 logcat 日志失败: {e}")
 
+    def list_files(self, path="/"):
+        try:
+            files_and_dir = self.device.sync.list(path)
+            entries = []
+            for file_or_dir in files_and_dir:
+                if file_or_dir.path in ('.', '..'):
+                    continue
+                full_path = os.path.join(path, file_or_dir.path).replace(os.sep, '/')
+                entry = {
+                    'name': file_or_dir.path,
+                    'path': full_path,
+                    'size': file_or_dir.size,
+                    'is_dir': file_or_dir.mode == 16889 or file_or_dir.mode == 41380 or file_or_dir.mode == 16877,
+                    'permissions': "未知",
+                    'owner': "未知",
+                    'group': "未知",
+                    'modified': file_or_dir.mtime.strftime("%Y-%m-%d %H:%M:%S")
+                }
+                entries.append(entry)
+            return sorted(entries, key=lambda x: (not x['is_dir'], x['name'].lower()))
+        except Exception as e:
+            logger.error(f"获取文件列表失败: {e}")
+            return []
+
+    def list_files_in_dir(self, path="/sdcard"):
+        """列出指定目录下的文件和文件夹"""
+
+        try:
+            # 获取目录列表
+            result = self.device.shell(f'ls -l {path}').strip()
+            entries = []
+            for line in result.split('\n'):  # 跳过第一行总计信息
+                try:
+                    parts = line.split(None, 7)
+                    if len(parts) >= 7:
+                        perms, links, owner, group, size, year_month, day, name = parts
+                        is_dir = perms.startswith('d')
+                        full_path = os.path.join(path, name).replace(os.sep, '/')
+                        entry = {
+                            'name': name,
+                            'path': full_path,
+                            'size': int(size),
+                            'is_dir': is_dir,
+                            'permissions': perms,
+                            'owner': owner,
+                            'group': group,
+                            'modified': f"{day} {year_month}"
+                        }
+                        entries.append(entry)
+                except Exception as e:
+                    logger.error(f"解析文件信息失败: {e}")
+                    continue
+            return sorted(entries, key=lambda x: (not x['is_dir'], x['name'].lower()))
+
+        except Exception as e:
+            logger.error(f"获取文件列表失败: {e}")
+            return []
+
+    def create_folder(self, path):
+        """创建文件夹"""
+        try:
+            self.device.shell(f'mkdir -p "{path}"')
+            return {"status": "success", "message": "文件夹创建成功"}
+        except Exception as e:
+            logger.error(f"创建文件夹失败: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def delete_file(self, path):
+        """删除文件或文件夹"""
+        try:
+            self.device.shell(f'rm -rf "{path}"')
+            return {"status": "success", "message": "删除成功"}
+        except Exception as e:
+            logger.error(f"删除失败: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def download_file(self, path):
+        """下载文件"""
+        try:
+            filename = os.path.basename(path)
+            save_path = webview.windows[0].create_file_dialog(
+                webview.SAVE_DIALOG,
+                save_filename=filename
+            )
+
+            if save_path:
+                self.device.sync.pull(path, save_path)
+                return {"status": "success", "message": "文件下载成功"}
+            return {"status": "cancelled", "message": "操作已取消"}
+        except Exception as e:
+            logger.error(f"下载文件失败: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def upload_file(self, destination_path):
+        """上传文件"""
+        try:
+            filename = webview.windows[0].create_file_dialog(
+                webview.OPEN_DIALOG,
+                allow_multiple=False
+            )
+
+            if filename:
+                logger.debug(f"上传文件: {filename} -> {destination_path}/{os.path.basename(filename[0])}")
+                self.device.sync.push(filename[0].replace('\\', '/'),
+                                      f'{destination_path}/{os.path.basename(filename[0])}')
+                return {"status": "success", "message": "文件上传成功"}
+            return {"status": "cancelled", "message": "操作已取消"}
+        except Exception as e:
+            logger.error(f"上传文件失败: {e}")
+            return {"status": "error", "message": str(e)}
+
 
 def get_entrypoint():
     def exists(path):
@@ -342,9 +482,9 @@ if __name__ == '__main__':
     RENDERER_URL = "http://localhost:5173"
     APP_VERSION = "v0.1.3"
     api = Api()
-    window = webview.create_window('CBAdbEasy {}'.format(APP_VERSION), RENDERER_URL, js_api=api, width=1280,
+    window = webview.create_window('CBAdbEasy {}'.format(APP_VERSION), entry, js_api=api, width=1280,
                                    height=700,
                                    min_size=(1280, 700), )
     webview.start(api.update_logcat)
-    # api.device_info('6b971835')
-    # api.get_screenshot()
+    # api.device_info('119.29.201.189:41079')
+    # api.list_files_in_dir()

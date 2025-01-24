@@ -7,6 +7,7 @@ import {
   // Database,
   FileJson,
   ScreenShareOff,
+  FileText,
   // Globe,
 } from "lucide-react";
 import { NavMenu } from "@/components/nav-menu";
@@ -21,7 +22,7 @@ import { InstructTab } from "@/components/instruct-tab";
 import { LogsTab } from "@/components/logs-tab";
 import { useDeviceStore } from "@/store/device-store";
 import { useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
+
 import { usePythonState } from "@/hooks/pythonBridge";
 import { ScreenshotTab } from "@/components/screenshot-tab";
 
@@ -39,7 +40,6 @@ function App() {
   };
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Toaster />
       <Tabs defaultValue="overview" className="w-full">
         <div className="sticky top-0 z-10 bg-white shadow">
           <div className="flex items-center px-4">
@@ -66,6 +66,13 @@ function App() {
                 进程
               </TabsTrigger>
               <TabsTrigger
+                value="files"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                文件
+              </TabsTrigger>
+              <TabsTrigger
                 value="performance"
                 className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
               >
@@ -79,13 +86,7 @@ function App() {
                 <ScreenShareOff className="w-4 h-4 mr-2" />
                 截屏
               </TabsTrigger>
-              {/*<TabsTrigger*/}
-              {/*  value="files"*/}
-              {/*  className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"*/}
-              {/*>*/}
-              {/*  <FileText className="w-4 h-4 mr-2" />*/}
-              {/*  文件*/}
-              {/*</TabsTrigger>*/}
+
               {/*<TabsTrigger*/}
               {/*  value="terminal"*/}
               {/*  className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"*/}
@@ -94,18 +95,18 @@ function App() {
               {/*  终端*/}
               {/*</TabsTrigger>*/}
               <TabsTrigger
-                value="backup"
-                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-              >
-                <Zap className="w-4 h-4 mr-2" />
-                快捷指令
-              </TabsTrigger>
-              <TabsTrigger
                 value="logs"
                 className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
               >
                 <FileJson className="w-4 h-4 mr-2" />
                 日志
+              </TabsTrigger>
+              <TabsTrigger
+                value="backup"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                快捷指令
               </TabsTrigger>
             </TabsList>
           </div>

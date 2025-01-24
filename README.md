@@ -54,12 +54,21 @@
   - 应用列表显示
   - 系统/非系统应用过滤
   - 应用搜索功能
-  - 应用详细信息查看
+  - 应用操作
 
 - 进程管理
   - 进程列表显示
   - 进程状态监控
-  - 进程操作（结束等）
+  - 进程操作（结束等）（开发中）
+
+- 文件管理
+  - 文件上传
+  - 文件删除
+  - 目录创建删除
+  
+- 屏幕截屏
+  - 支持放大缩小
+  - 图片剪切下载
 
 - 性能监控
   - 内存使用实时监控
@@ -80,18 +89,21 @@
 
 ### 📚 演示图
 <div align="center">
-    <img src="/docs/20250106100144.png" alt="图片1" width="45%" style="margin-right: 10px;">
-    <img src="/docs/20250123175824.png" alt="图片2" width="45%" style="margin-right: 10px;">
+    <img src="/docs/20250106100144.png" alt="" width="45%" style="margin-right: 10px;">
+    <img src="/docs/20250123175824.png" alt="" width="45%" style="margin-right: 10px;">
 </div>
 <div align="center">
-    <img src="/docs/20250123180100.png" alt="图片1" width="45%" style="margin-right: 10px;">
-    <img src="/docs/20250123180200.png" alt="图片2" width="45%" style="margin-right: 10px;">
+    <img src="/docs/20250123180100.png" alt="" width="45%" style="margin-right: 10px;">
+    <img src="/docs/20250123180200.png" alt="" width="45%" style="margin-right: 10px;">
 </div>
 <div align="center">
-    <img src="/docs/20250123175908.png" alt="图片1" width="45%" style="margin-right: 10px;">
-    <img src="/docs/20250123180023.png" alt="图片2" width="45%" style="margin-right: 10px;">
+    <img src="/docs/20250123175908.png" alt="" width="45%" style="margin-right: 10px;">
+    <img src="/docs/20250123180023.png" alt="" width="45%" style="margin-right: 10px;">
 </div>
-
+<div align="center">
+    <img src="/docs/20250124173231.png" alt="" width="45%" style="margin-right: 10px;">
+    <img src="/docs/20250124173142.png" alt="" width="45%" style="margin-right: 10px;">
+</div>
 
 ### ☕ 开发指南
 

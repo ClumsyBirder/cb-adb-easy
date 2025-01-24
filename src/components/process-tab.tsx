@@ -73,7 +73,10 @@ export function ProcessTab() {
           共 {filteredProcesses.length} 个进程
         </div>
       </div>
-      <div className="border max-h-[450px] overflow-y-auto">
+      <div
+        className="overflow-y-auto"
+        style={{ maxHeight: "calc(100vh - 13rem)" }}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -87,7 +90,7 @@ export function ProcessTab() {
           </TableHeader>
           <TableBody>
             {filteredProcesses.map((process) => (
-              <TableRow key={process.pid} className={"hover:bg-green-200"}>
+              <TableRow key={process.pid} className={"hover:bg-primary/70"}>
                 <TableCell className="font-medium">{process.name}</TableCell>
                 <TableCell>{process["%cpu"]}</TableCell>
                 <TableCell>{process["time+"]}</TableCell>
