@@ -20,7 +20,7 @@ interface CPUCoreInfo {
   usage: number;
 }
 
-export function TerminalTab() {
+export function Terminal() {
   const [isRunning, setIsRunning] = useState(true);
   const [cpuData, setCpuData] = useState<CPUData[]>([]);
   const [memoryData, setMemoryData] = useState<CPUData[]>([]);

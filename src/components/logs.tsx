@@ -44,7 +44,7 @@ const views = [
   "ERROR",
 ] as const;
 
-export function LogsTab() {
+export function Logs() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [selectedView, setSelectedView] = useState<string>("Standard View");
   const [packageFilter, setPackageFilter] = useState("");
@@ -54,21 +54,17 @@ export function LogsTab() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Add the log entry handler to window.pywebview.state
     if (window.pywebview && window.pywebview.state) {
       window.pywebview.state.addLogEntry = (logEntry: LogEntry) => {
         console.log(logEntry);
         setLogs((prevLogs) => [...prevLogs, logEntry].slice(-1000));
       };
     }
-
-    // Setup ResizeObserver for message column
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const width = entry.contentRect.width;
-        // Calculate characters that can fit (assuming monospace font)
-        const charsPerWidth = Math.floor(width / 8); // 8px per character (approximate)
-        setMessageWidth(Math.max(30, charsPerWidth - 10)); // minimum 30 chars, subtract padding
+        const charsPerWidth = Math.floor(width / 8);
+        setMessageWidth(Math.max(30, charsPerWidth - 10));
       }
     });
 
@@ -83,14 +79,13 @@ export function LogsTab() {
     try {
       await navigator.clipboard.writeText(text);
       toast({
-        description: "Message copied to clipboard",
+        description: "消息已复制到剪贴板",
         duration: 2000,
       });
     } catch (err) {
       toast({
         description: err as string,
         variant: "destructive",
-        duration: 2000,
       });
     }
   };

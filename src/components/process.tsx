@@ -9,9 +9,8 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-// import { Loader2 } from "lucide-react";
 
-export function ProcessTab() {
+export function Process() {
   const [filter, setFilter] = useState("");
   const [showSystemOnly, setShowSystemOnly] = useState(false);
   const [processes, setProcesses] = useState<any[]>([]);

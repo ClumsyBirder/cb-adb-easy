@@ -37,7 +37,7 @@ interface App {
   packageName: string;
 }
 
-export function AppsTab() {
+export function Apps() {
   const { selectedPackage, setSelectedPackage } = useAppsStore();
   const [filter, setFilter] = useState("");
   const [showSystemApps, setShowSystemApps] = useState(false);

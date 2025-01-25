@@ -12,7 +12,7 @@ import {
   CaseUpper,
 } from "lucide-react";
 
-export function OverviewTab({ deviceInfo }: { deviceInfo: API.DeviceInfo }) {
+export function Overview({ deviceInfo }: { deviceInfo: API.DeviceInfo }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div className="flex items-start gap-3">

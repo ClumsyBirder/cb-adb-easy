@@ -2,7 +2,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
 import {
   Card,
   CardContent,
-  CardDescription,
+  // CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/chart";
 import { usePerformanceStore } from "@/store/performance-store";
 import { useAppsStore } from "@/store/apps-store";
-import { Play, RotateCw } from "lucide-react";
-
+import { Download, Play, RotateCw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 const chartConfig = {
   JavaHeap: {
     label: "Java Heap",
@@ -51,7 +51,7 @@ const chartConfig = {
     color: "hsl(var(--chart-8))",
   },
 } satisfies ChartConfig;
-export function PerformanceTab() {
+export function Performance() {
   const {
     isRunning,
     timePoints,
@@ -65,7 +65,6 @@ export function PerformanceTab() {
 
   const handleToggle = () => {
     if (!selectedPackage) {
-      // 可以添加一个提示，告诉用户需要先选择应用
       return;
     }
 
@@ -76,9 +75,25 @@ export function PerformanceTab() {
       stopMonitoring();
     }
   };
+  const handleExportData = (processName: string) => {
+    if (timePoints.length === 0) return;
+    const exportData = timePoints.map((point) => ({
+      time: point.time,
+      ...point.processes[processName],
+    }));
 
+    window.pywebview.api.save_memory_content(
+      JSON.stringify(
+        {
+          processName,
+          data: exportData,
+        },
+        null,
+        2,
+      ),
+    );
+  };
   const renderProcessChart = (processName: string) => {
-    // 转换数据格式以适应图表
     const chartData = timePoints.map((point) => ({
       time: point.time,
       ...point.processes[processName],
@@ -90,9 +105,21 @@ export function PerformanceTab() {
       <Card key={processName}>
         <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
           <div className="grid flex-1 gap-1 text-center sm:text-left">
-            <CardTitle>{processName}</CardTitle>
-            <CardDescription>Memory usage trends</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Badge className="h-5 px-2">内存</Badge>
+              {processName}
+            </CardTitle>
+            {/* <CardDescription>Memory usage trends</CardDescription> */}
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => handleExportData(processName)}
+            disabled={timePoints.length === 0}
+          >
+            <Download className="h-4 w-4" />
+          </Button>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
           <ChartContainer

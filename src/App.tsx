@@ -3,35 +3,33 @@ import {
   Play,
   Activity,
   Zap,
-  // Terminal,
-  // Database,
   FileJson,
   ScreenShareOff,
   FileText,
-  // Globe,
+  Video,
 } from "lucide-react";
 import { NavMenu } from "@/components/nav-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { OverviewTab } from "@/components/overview-tab";
-import { FilesTab } from "@/components/files-tab";
-import { AppsTab } from "@/components/apps-tab";
-import { ProcessTab } from "@/components/process-tab";
-import { PerformanceTab } from "@/components/performance-tab";
-import { TerminalTab } from "@/components/terminal-tab";
-import { InstructTab } from "@/components/instruct-tab";
-import { LogsTab } from "@/components/logs-tab";
+import { Overview } from "@/components/overview";
+import { Files } from "@/components/files";
+import { Apps } from "@/components/apps";
+import { Process } from "@/components/process";
+import { Performance } from "@/components/performance";
+import { Terminal } from "@/components/terminal";
+import { Instruct } from "@/components/instruct";
+import { Logs } from "@/components/logs";
+import { Screenshot } from "@/components/screenshot";
 import { useDeviceStore } from "@/store/device-store";
 import { useEffect } from "react";
 
 import { usePythonState } from "@/hooks/pythonBridge";
-import { ScreenshotTab } from "@/components/screenshot-tab";
+import Screenrecord from "@/components/screenrecord.tsx";
 
 function App() {
   const { deviceInfo, fetchDevices } = useDeviceStore();
   const fetchDeviceInfo = useDeviceStore((state) => state.fetchDeviceInfo);
   usePythonState("ticker");
   useEffect(() => {
-    // 应用启动时加载设备列表
     fetchDevices().then((r) => console.log(r));
   }, []);
 
@@ -86,7 +84,13 @@ function App() {
                 <ScreenShareOff className="w-4 h-4 mr-2" />
                 截屏
               </TabsTrigger>
-
+              <TabsTrigger
+                value="screen-recording"
+                className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                <Video className="w-4 h-4 mr-2" />
+                录屏
+              </TabsTrigger>
               {/*<TabsTrigger*/}
               {/*  value="terminal"*/}
               {/*  className="h-12 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"*/}
@@ -116,48 +120,53 @@ function App() {
           <div className="mx-auto">
             <TabsContent value="overview" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                {deviceInfo && <OverviewTab deviceInfo={deviceInfo} />}
+                {deviceInfo && <Overview deviceInfo={deviceInfo} />}
               </div>
             </TabsContent>
 
             <TabsContent value="apps" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <AppsTab />
+                <Apps />
               </div>
             </TabsContent>
             <TabsContent value="process" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <ProcessTab />
+                <Process />
               </div>
             </TabsContent>
             <TabsContent value="performance" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <PerformanceTab />
+                <Performance />
               </div>
             </TabsContent>
             <TabsContent value="files" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <FilesTab />
+                <Files />
               </div>
             </TabsContent>
             <TabsContent value="terminal" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <TerminalTab />
+                <Terminal />
               </div>
             </TabsContent>
             <TabsContent value="backup" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <InstructTab />
+                <Instruct />
               </div>
             </TabsContent>
             <TabsContent value="logs" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <LogsTab />
+                <Logs />
               </div>
             </TabsContent>
             <TabsContent value="screenshot" className="m-0">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <ScreenshotTab />
+                <Screenshot />
+              </div>
+            </TabsContent>
+            <TabsContent value="screen-recording" className="m-0">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <Screenrecord />
               </div>
             </TabsContent>
           </div>

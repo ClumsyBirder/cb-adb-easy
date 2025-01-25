@@ -147,8 +147,8 @@ npm run test
 ```
 src/
 ├── components/ # React 组件
-│ ├── apps-tab.tsx # 应用管理标签页
-│ ├── performance-tab.tsx # 性能监控标签页
+│ ├── apps.tsx # 应用管理标签页
+│ ├── performance.tsx # 性能监控标签页
 │ └── ...
 ├── store/ # 状态管理
 │ ├── apps-store.ts # 应用状态管理

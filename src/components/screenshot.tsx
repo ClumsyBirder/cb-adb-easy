@@ -20,7 +20,7 @@ interface ScreenshotInfo {
   image: string;
 }
 
-export function ScreenshotTab() {
+export function Screenshot() {
   const [screenshot, setScreenshot] = useState<ScreenshotInfo>();
   const [isLoading, setIsLoading] = useState(false);
   const transformComponentRef = useRef(null);
@@ -32,7 +32,7 @@ export function ScreenshotTab() {
       const res = await window.pywebview.api.get_screenshot();
       setScreenshot(res);
     } catch (error) {
-      console.error("Error refreshing screenshot:", error);
+      console.error("刷新屏幕截图时出错:", error);
     } finally {
       setIsLoading(false);
     }
@@ -40,16 +40,27 @@ export function ScreenshotTab() {
   useEffect(() => {
     fetchScreenshot().then((r) => console.log(r));
   }, []);
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!screenshot) {
-      console.error("No screenshot available to download");
+      console.error("没有屏幕截图可供下载");
       return;
+    }
+    const res = await window.pywebview.api.save_screenshot(screenshot.image);
+    if (res) {
+      toast({
+        description: "屏幕截图已保存",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        description: "屏幕截图保存失败",
+      });
     }
   };
 
   const handleCopy = async () => {
     if (!screenshot) {
-      console.error("No screenshot available to copy");
+      console.error("没有可复制的屏幕截图");
       return;
     }
 

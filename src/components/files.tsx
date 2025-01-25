@@ -39,7 +39,7 @@ interface FileEntry {
   modified: string;
 }
 
-export function FilesTab() {
+export function Files() {
   const [currentPath, setCurrentPath] = useState("/");
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [newFolderName, setNewFolderName] = useState("");
@@ -71,52 +71,52 @@ export function FilesTab() {
     const newPath = `${currentPath}/${newFolderName}`;
     const result = await window.pywebview.api.create_folder(newPath);
 
-    if (result.status === "success") {
+    if (result) {
       toast({ description: "文件夹创建成功" });
       await loadFiles(currentPath);
       setNewFolderName("");
     } else {
       toast({
         variant: "destructive",
-        description: result.message,
+        description: "文件创建失败",
       });
     }
   };
 
   const handleDelete = async (path: string) => {
     const result = await window.pywebview.api.delete_file(path);
-    if (result.status === "success") {
+    if (result) {
       toast({ description: "删除成功" });
       await loadFiles(currentPath);
     } else {
       toast({
         variant: "destructive",
-        description: result.message,
+        description: "删除失败",
       });
     }
   };
 
   const handleDownload = async (path: string) => {
     const result = await window.pywebview.api.download_file(path);
-    if (result.status === "success") {
+    if (result) {
       toast({ description: "下载成功" });
-    } else if (result.status !== "cancelled") {
+    } else {
       toast({
         variant: "destructive",
-        description: result.message,
+        description: "下载失败",
       });
     }
   };
 
   const handleUpload = async () => {
     const result = await window.pywebview.api.upload_file(currentPath);
-    if (result.status === "success") {
+    if (result) {
       toast({ description: "上传成功" });
       await loadFiles(currentPath);
-    } else if (result.status !== "cancelled") {
+    } else {
       toast({
         variant: "destructive",
-        description: result.message,
+        description: "上传失败",
       });
     }
   };

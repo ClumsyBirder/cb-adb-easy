@@ -16,8 +16,9 @@ from enum import Enum
 
 import webview
 import json
+import csv
 
-from time import time
+import time
 from adbutils import adb, AdbDevice
 from loguru import logger
 
@@ -73,14 +74,22 @@ def set_interval(interval):
 class Api:
 
     def __init__(self):
+        # self.device = None
         self.device: AdbDevice
+        self.recording_thread = None
+        self.is_recording = False
+        self.recording_file = None
 
     def get_pid(self, package_name):
-
+        """
+        通过报名获取pid
+        :param package_name:
+        :return:
+        """
         commands = 'ps -A| grep {}'.format(package_name)
         result = self.device.shell(commands)
         str_ret = result.split('\n')
-        pid = '-1'
+        pid = '0'
         for strs in str_ret:
             if strs == '':
                 continue
@@ -89,18 +98,26 @@ class Api:
             for info in str_list:
                 if info != '':
                     str_list_result.append(info)
-            str_pacackage = str_list_result[8]
-            if str_pacackage == package_name:
+            str_package = str_list_result[8]
+            if str_package == package_name:
                 return str_list_result[1]
 
-        return pid
+        return int(pid)
 
     def get_sdk_version(self):
-
+        """
+        获取sdk版本
+        :return:
+        """
         sdk_version = self.device.shell("getprop ro.build.version.sdk").strip()
         return int(sdk_version)
 
-    def get_device_list(self):
+    @classmethod
+    def get_device_list(cls):
+        """
+        获取设备列表
+        :return:
+        """
         device_list = []
         for d in adb.device_list():
             device_info = {
@@ -113,12 +130,14 @@ class Api:
         return device_list
 
     def device_info(self, serial):
+        """
+        获取设备基础信息
+        :param serial:
+        :return:
+        """
         if not serial:
-            logger.error("Invalid serial number")
+            logger.error("序列号无效")
             return {}
-
-        logger.debug(f"Fetching device info for serial: {serial}")
-
         device_info = {}
         self.device = adb.device(serial)
 
@@ -148,8 +167,8 @@ class Api:
 
         device_info['androidVersion'] = self.device.shell('getprop ro.build.version.release')
 
-        memInfo = self.device.shell('cat /proc/meminfo')
-        for line in memInfo.split('\n'):
+        meminfo = self.device.shell('cat /proc/meminfo')
+        for line in meminfo.split('\n'):
             if line.startswith('MemTotal'):
                 device_info['memTotal'] = line.split(':')[1].strip()
             if line.startswith('MemAvailable'):
@@ -163,15 +182,26 @@ class Api:
         return device_info
 
     def get_packages(self, system=True):
+        """
+        包列表
+        :param system:
+        :return:
+        """
         command = 'pm list packages' if system else 'pm list packages -3'
         packages = self.device.shell(command)
         trimmed_result = packages.strip()
+        if not trimmed_result:
+            return []
         lines = trimmed_result.split('\n')
         processed_lines = [{'name': line[8:], 'packageName': line[8:], 'id': i} for i, line in enumerate(lines)]
         logger.debug(processed_lines)
         return processed_lines
 
     def get_processes(self):
+        """
+        获取进程
+        :return:
+        """
         columns = ['pid', '%cpu', 'time+', 'res', 'user', 'name', 'args']
         command = ''.join(f" -o {column}" for column in columns)
         logger.debug("top -b -n 1 " + command)
@@ -223,28 +253,42 @@ class Api:
         return processes
 
     def install_package(self):
+        """
+        安装apk
+        :return:
+        """
         filename = webview.windows[0].create_file_dialog(webview.OPEN_DIALOG, allow_multiple=False,
-                                                         file_types=(".apk",))
+                                                         file_types=('APK Files(*.apk)',))
         logger.debug(filename)
         if not filename:
-            return
+            return False
         self.device.install(filename[0], nolaunch=True)
         return True
 
     def uninstall_package(self, package_name):
+        """
+        卸载应用
+        :param package_name:
+        :return:
+        """
         self.device.uninstall(package_name)
         return True
 
     def pull_apk(self, package_name):
+        """
+        导出apk包
+        :param package_name:
+        :return:
+        """
         apk_path = self.device.shell(f'pm path {package_name}').strip().split(':')[-1]
         if not apk_path:
             logger.error(f"未找到包名为 {package_name} 的 APK")
             return False
         filename = webview.windows[0].create_file_dialog(webview.SAVE_DIALOG, save_filename=f"{package_name}.apk",
-                                                         file_types=(".apk",))
+                                                         file_types=('APK Files(*.apk)',))
         logger.debug(f"apk_path: {apk_path}  filename: {filename}")
         if not filename:
-            return
+            return False
         self.device.sync.pull_file(apk_path, filename)
         return True
 
@@ -253,7 +297,7 @@ class Api:
         return True
 
     def start_package(self, package_name):
-        self.device.shell(f'am start -n {package_name}')
+        self.device.app_start(package_name)
         return True
 
     def stop_package(self, package_name):
@@ -269,7 +313,10 @@ class Api:
         return True
 
     def get_screenshot(self):
-
+        """
+        截取屏幕
+        :return: image
+        """
         pil_image = self.device.screenshot()
         with io.BytesIO() as buffered:
             pil_image.save(buffered, format="PNG")
@@ -287,27 +334,81 @@ class Api:
 
             return data
 
-    def fullscreen(self):
+    @classmethod
+    def save_screenshot(cls, base64_data):
+        """
+        保存截图
+        :param base64_data: base64编码的图片数据
+        :return: bool
+        """
+        try:
+            filename = webview.windows[0].create_file_dialog(webview.SAVE_DIALOG, save_filename=f"screenshot.png",
+                                                             file_types=('PNG Files(*.png)',))
+            if not filename:
+                return False
+
+            # 解码base64数据并保存为文件
+            img_data = base64.b64decode(base64_data)
+            with open(filename, 'wb') as f:
+                f.write(img_data)
+            return True
+        except Exception as e:
+            logger.error(f"保存截图失败: {e}")
+            return False
+
+    @classmethod
+    def fullscreen(cls):
         webview.windows[0].toggle_fullscreen()
 
-    def save_content(self, content):
-        filename = webview.windows[0].create_file_dialog(webview.SAVE_DIALOG)
-        if not filename:
-            return
+    @classmethod
+    def save_memory_content(cls, content):
+        try:
+            data = json.loads(content)
+            process_name = data['processName']
+            performance_data = data['data']
+            safe_process_name = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', process_name)
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = f"memory_data_{safe_process_name}_{timestamp}.csv"
 
-        with open(filename[0], 'w') as f:
-            f.write(content)
+            headers = ['Time', 'Java Heap', 'Native Heap', 'Code',
+                       'Stack', 'Graphics', 'Private Other', 'System', 'TOTAL PSS']
+
+            with open(filename, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(headers)
+
+                for entry in performance_data:
+                    row = [
+                        entry['time'],
+                        entry['Java Heap'],
+                        entry['Native Heap'],
+                        entry['Code'],
+                        entry['Stack'],
+                        entry['Graphics'],
+                        entry['Private Other'],
+                        entry['System'],
+                        entry['TOTAL PSS']
+                    ]
+                    writer.writerow(row)
+
+            return True
+        except Exception as e:
+            logger.error(f"保存文件失败: {e}")
+            return False
 
     def get_memory_info(self, package_name: str):
-
+        """
+        获取应用执行内存
+        :param package_name:
+        :return:
+        """
         return MemoryMonitor(self.device).get_mem_info(self.get_pid(package_name), 24, package_name)
 
-    @set_interval(1)
+    @set_interval(0.5)
     def update_logcat(self):
-
         try:
             if self.device is None:
-                return
+                return False
             self.device.shell("logcat --clear")
 
             if len(webview.windows) > 0:
@@ -318,8 +419,6 @@ class Api:
                         line = f.readline().strip()
                         if not line:
                             continue
-
-                        # Parse logcat line into components
                         try:
                             parts = line.split(None, 5)
                             if len(parts) >= 6:
@@ -327,25 +426,31 @@ class Api:
                                 log_entry = {
                                     'timestamp': f"{date} {time}",
                                     'processId': f"{pid}-{tid}",
-                                    'level': level[0],  # First character of level (I/D/W/E/V)
+                                    'level': level[0],  # level (I/D/W/E/V)
                                     'message': message,
                                     'component': message.split(':', 1)[0] if ':' in message else 'unknown',
-                                    'package': 'system'  # Default package name
+                                    'package': 'system'
                                 }
-                                # Send formatted log entry to frontend
                                 logger.debug(f"log_entry: {log_entry}")
                                 js_code = f'window.pywebview.state && window.pywebview.state.addLogEntry({json.dumps(log_entry)})'
                                 webview.windows[0].evaluate_js(js_code)
                         except Exception as e:
-                            logger.error(f"Error parsing logcat line: {e}")
+                            logger.error(f"解析 logcat 行时出错: {e}")
                             continue
-
         except Exception as e:
             logger.error(f"获取 logcat 日志失败: {e}")
 
     def list_files(self, path="/"):
+        """
+        获取文件列表
+        :param path:
+        :return:
+        """
         try:
             files_and_dir = self.device.sync.list(path)
+            if not files_and_dir:
+                return []
+            logger.debug(f"获取文件列表: {files_and_dir}")
             entries = []
             for file_or_dir in files_and_dir:
                 if file_or_dir.path in ('.', '..'):
@@ -355,7 +460,7 @@ class Api:
                     'name': file_or_dir.path,
                     'path': full_path,
                     'size': file_or_dir.size,
-                    'is_dir': file_or_dir.mode == 16889 or file_or_dir.mode == 41380 or file_or_dir.mode == 16877,
+                    'is_dir': file_or_dir.mode == 16889 or file_or_dir.mode == 16888 or file_or_dir.mode == 41380 or file_or_dir.mode == 16877,
                     'permissions': "未知",
                     'owner': "未知",
                     'group': "未知",
@@ -368,7 +473,6 @@ class Api:
             return []
 
     def list_files_in_dir(self, path="/sdcard"):
-        """列出指定目录下的文件和文件夹"""
 
         try:
             # 获取目录列表
@@ -402,25 +506,37 @@ class Api:
             return []
 
     def create_folder(self, path):
-        """创建文件夹"""
+        """
+        创建文件夹
+        :param path:
+        :return:
+        """
         try:
             self.device.shell(f'mkdir -p "{path}"')
-            return {"status": "success", "message": "文件夹创建成功"}
+            return True
         except Exception as e:
             logger.error(f"创建文件夹失败: {e}")
-            return {"status": "error", "message": str(e)}
+            return False
 
     def delete_file(self, path):
-        """删除文件或文件夹"""
+        """
+        删除文件或文件夹
+        :param path:
+        :return:
+        """
         try:
             self.device.shell(f'rm -rf "{path}"')
-            return {"status": "success", "message": "删除成功"}
+            return True
         except Exception as e:
             logger.error(f"删除失败: {e}")
-            return {"status": "error", "message": str(e)}
+            return False
 
     def download_file(self, path):
-        """下载文件"""
+        """
+        下载文件
+        :param path:
+        :return:
+        """
         try:
             filename = os.path.basename(path)
             save_path = webview.windows[0].create_file_dialog(
@@ -430,14 +546,17 @@ class Api:
 
             if save_path:
                 self.device.sync.pull(path, save_path)
-                return {"status": "success", "message": "文件下载成功"}
-            return {"status": "cancelled", "message": "操作已取消"}
+                return True
         except Exception as e:
             logger.error(f"下载文件失败: {e}")
-            return {"status": "error", "message": str(e)}
+            return False
 
-    def upload_file(self, destination_path):
-        """上传文件"""
+    def upload_file(self, path):
+        """
+        上传文件
+        :param path:
+        :return:
+        """
         try:
             filename = webview.windows[0].create_file_dialog(
                 webview.OPEN_DIALOG,
@@ -445,21 +564,85 @@ class Api:
             )
 
             if filename:
-                logger.debug(f"上传文件: {filename} -> {destination_path}/{os.path.basename(filename[0])}")
+                logger.debug(f"上传文件: {filename} -> {path}/{os.path.basename(filename[0])}")
                 self.device.sync.push(filename[0].replace('\\', '/'),
-                                      f'{destination_path}/{os.path.basename(filename[0])}')
-                return {"status": "success", "message": "文件上传成功"}
+                                      f'{path}/{os.path.basename(filename[0])}')
+                return True
             return {"status": "cancelled", "message": "操作已取消"}
         except Exception as e:
             logger.error(f"上传文件失败: {e}")
-            return {"status": "error", "message": str(e)}
+            return False
 
+    def start_recording(self):
+        """
+        开始录制屏幕 使用线程处理录制过程
+        :return:
+        """
+        try:
+            if self.is_recording:
+                return False
+                
+            # 创建临时文件路径用于保存录制文件
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            self.recording_file = f"/sdcard/screenrecord_{timestamp}.mp4"
+            
+            def record_screen():
+                try:
+                    self.device.shell(f"screenrecord {self.recording_file}")
+                except Exception as e:
+                    logger.error(f"录制过程出错: {e}")
+                    self.is_recording = False
+            
+            # 启动录制线程
+            self.recording_thread = threading.Thread(target=record_screen)
+            self.recording_thread.daemon = True
+            self.recording_thread.start()
+            self.is_recording = True
+            
+            return True
+        except Exception as e:
+            logger.error(f"开始录制失败: {e}")
+            self.is_recording = False
+            return False
+
+    def stop_recording(self):
+        """
+        停止录制并保存文件
+        :return:
+        """
+        try:
+            if not self.is_recording:
+                return False
+
+            # 终止录制进程
+            self.device.shell("pkill -l SIGINT screenrecord")
+            self.is_recording = False
+            time.sleep(1)
+            save_path = webview.windows[0].create_file_dialog(
+                webview.SAVE_DIALOG,
+                save_filename="screen_record.mp4",
+                file_types=('MP4 Files (*.mp4)',)
+            )
+            
+            if save_path:
+                # 从设备下载录制文件
+                self.device.sync.pull(self.recording_file, save_path)
+                time.sleep(1)
+                self.device.shell(f"rm {self.recording_file}")
+                return {"fileUrl": save_path}
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"停止录制失败: {e}")
+            self.is_recording = False
+            return False
 
 def get_entrypoint():
     def exists(path):
         return os.path.exists(os.path.join(os.path.dirname(__file__), path))
 
-    if exists('../dist/index.html'):  # unfrozen development
+    if exists('../dist/index.html'):
         return '../dist/index.html'
 
     if exists('./dist/index.html'):
@@ -474,17 +657,15 @@ entry = get_entrypoint()
 @set_interval(1)
 def update_ticker():
     if len(webview.windows) > 0:
-        logger.debug(f"update_ticker: {time()}")
-        webview.windows[0].evaluate_js('window.pywebview.state && window.pywebview.state.set_ticker("%d")' % time())
+        logger.debug(f"update_ticker: {time.time()}")
+        webview.windows[0].evaluate_js('window.pywebview.state && window.pywebview.state.set_ticker("%d")' % time.time())
 
 
 if __name__ == '__main__':
     RENDERER_URL = "http://localhost:5173"
-    APP_VERSION = "v0.1.4"
+    APP_VERSION = "v0.1.5"
     api = Api()
     window = webview.create_window('CBAdbEasy {}'.format(APP_VERSION), entry, js_api=api, width=1280,
                                    height=700,
                                    min_size=(1280, 700), )
-    webview.start(api.update_logcat)
-    # api.device_info('119.29.201.189:41079')
-    # api.list_files_in_dir()
+    webview.start()
