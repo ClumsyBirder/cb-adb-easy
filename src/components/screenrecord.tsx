@@ -9,7 +9,9 @@ export default function Screenrecord() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [recordingProgress, setRecordingProgress] = useState(0);
-  const [recordedFileUrl, setRecordedFileUrl] = useState<string | null>(null);
+  const [recordedVideoData, setRecordedVideoData] = useState<string | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
@@ -32,23 +34,16 @@ export default function Screenrecord() {
         setIsRecording(true);
         setRecordingTime(0);
         setRecordingProgress(0);
-        setRecordedFileUrl(null);
+        setRecordedVideoData(null);
         toast({
-          title: "Recording started",
-          description: result.message,
+          title: "记录开始",
         });
       } else {
-        throw new Error(result.message);
+        toast({
+          title: "记录录制失败，请再试一次。",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to start recording. Please try again.",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -57,26 +52,20 @@ export default function Screenrecord() {
   const handleStopRecording = async () => {
     setIsLoading(true);
     try {
+      setIsRecording(false);
       const result = await window.pywebview.api.stop_recording();
-      if (result) {
-        setIsRecording(false);
-        setRecordedFileUrl(result.fileUrl);
+      if (result && result.videoData) {
+        setRecordedVideoData(result.videoData);
         toast({
-          title: "Recording stopped",
-          description: result.message,
+          title: "记录停止",
+          description: "录制成功完成",
         });
       } else {
-        throw new Error(result.message);
+        toast({
+          title: "停止录制失败，请再试一次。",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to stop recording. Please try again.",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -86,6 +75,28 @@ export default function Screenrecord() {
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
       videoRef.current.play();
+    }
+  };
+
+  const handleDownload = async () => {
+    if (recordedVideoData) {
+      setIsLoading(true);
+      try {
+        const success =
+          await window.pywebview.api.save_recording(recordedVideoData);
+        if (success) {
+          toast({
+            title: "导出成功",
+          });
+        } else {
+          toast({
+            title: "保存失败",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -134,13 +145,18 @@ export default function Screenrecord() {
               Stop Recording
             </Button>
           )}
-          {recordedFileUrl && (
+          {recordedVideoData && (
             <>
               <Button
-                onClick={() => window.open(recordedFileUrl, "_blank")}
+                onClick={handleDownload}
                 variant="outline"
+                disabled={isLoading}
               >
-                <Download className="mr-2 h-4 w-4" />
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
                 Download Recording
               </Button>
               <Button onClick={handleReplay} variant="outline">
@@ -150,16 +166,20 @@ export default function Screenrecord() {
             </>
           )}
         </div>
-        {recordedFileUrl && (
-          <div className="w-[calc(100vh-8rem)]">
-            <video
-              ref={videoRef}
-              src={recordedFileUrl}
-              controls
-              className="w-full rounded-lg shadow-lg"
-            >
-              Your browser does not support the video tag.
-            </video>
+        {recordedVideoData && (
+          <div className="w-[calc(100vh-7.9rem)]">
+            <div className="relative w-full pt-[55%]">
+              <video
+                ref={videoRef}
+                src={recordedVideoData}
+                controls
+                controlsList="nodownload"
+                onContextMenu={(e) => e.preventDefault()}
+                className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg object-contain bg-black"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
           </div>
         )}
       </div>

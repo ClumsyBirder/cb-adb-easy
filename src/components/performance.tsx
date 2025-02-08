@@ -15,8 +15,11 @@ import {
 } from "@/components/ui/chart";
 import { usePerformanceStore } from "@/store/performance-store";
 import { useAppsStore } from "@/store/apps-store";
-import { Download, Play, RotateCw } from "lucide-react";
+import { Copy, Download, Play, RotateCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import html2canvas from "html2canvas";
+
 const chartConfig = {
   JavaHeap: {
     label: "Java Heap",
@@ -51,6 +54,7 @@ const chartConfig = {
     color: "hsl(var(--chart-8))",
   },
 } satisfies ChartConfig;
+
 export function Performance() {
   const {
     isRunning,
@@ -60,7 +64,7 @@ export function Performance() {
     stopMonitoring,
     setUpdateInterval,
   } = usePerformanceStore();
-
+  const { toast } = useToast();
   const selectedPackage = useAppsStore((state) => state.selectedPackage);
 
   const handleToggle = () => {
@@ -82,7 +86,7 @@ export function Performance() {
       ...point.processes[processName],
     }));
 
-    window.pywebview.api.save_memory_content(
+    const success = window.pywebview.api.save_memory_content(
       JSON.stringify(
         {
           processName,
@@ -92,13 +96,50 @@ export function Performance() {
         2,
       ),
     );
+    if (success) {
+      toast({
+        title: "导出成功",
+      });
+    } else {
+      toast({
+        title: "保存失败",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCopyImg = async (processName: string) => {
+    const chartElement = document.getElementById(processName);
+    if (!chartElement) return;
+
+    const canvas = await html2canvas(chartElement);
+    const dataUrl = canvas.toDataURL("image/png");
+
+    // 将图片复制到剪贴板
+    const blob = await (await fetch(dataUrl)).blob();
+    const item = new ClipboardItem({ "image/png": blob });
+    navigator.clipboard
+      .write([item])
+      .then(() => {
+        toast({
+          title: `${processName} 复制到剪贴板`,
+        });
+      })
+      .catch(() => {
+        toast({
+          title: "复制失败",
+          variant: "destructive",
+        });
+      });
   };
   const renderProcessChart = (processName: string) => {
     const chartData = timePoints.map((point) => ({
       time: point.time,
       ...point.processes[processName],
     }));
-
+    // const averageValue =
+    //   chartData.reduce((sum, point) => sum + point[processName], 0) /
+    //   chartData.length;
     const formatYAxis = (value: number) => `${value} MB`;
 
     return (
@@ -115,13 +156,22 @@ export function Performance() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
+            onClick={() => handleCopyImg(processName)}
+            disabled={timePoints.length === 0}
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
             onClick={() => handleExportData(processName)}
             disabled={timePoints.length === 0}
           >
             <Download className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6" id={processName}>
           <ChartContainer
             config={chartConfig}
             className="aspect-auto h-[280px] w-full"
@@ -212,6 +262,12 @@ export function Performance() {
                 strokeWidth={2}
                 dot={false}
               />
+              {/*<ReferenceLine*/}
+              {/*  y={averageValue}*/}
+              {/*  label="平均值"*/}
+              {/*  stroke="red"*/}
+              {/*  strokeDasharray="3 3"*/}
+              {/*/>*/}
             </LineChart>
           </ChartContainer>
         </CardContent>
